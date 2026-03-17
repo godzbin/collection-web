@@ -26,4 +26,14 @@ export default defineConfig({
         : {},
     }),
   ],
+// 代理
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://192.168.1.169:9980/',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 })

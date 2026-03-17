@@ -1,144 +1,139 @@
 <template>
   <div class="page">
+
     <div class="page-bg"></div>
-    
     <!-- 左侧：运行时长和图表 -->
     <div class="left-panel">
-      <!-- 运行时长显示 -->
-      <div class="runtime-display">
-        <div class="runtime-card">
-          <h3>运行时长</h3>
-          <p class="runtime-value">{{runTime}}</p>
-        </div>
-      </div>
-      
-      <!-- 运行成功率图表 -->
-      <div class="chart-display">
-        <EchartsComponent 
-          :data="successRateData" 
-          :labels="labels"
-          title="近7日运行成功率"
-          line-color="#10b981"
-        />
-      </div>
+      <h2 class="mg-b" style="margin-bottom: 20px;">欢迎你，{{ userInfo.username }}</h2>
     </div>
-    
-    <!-- 右侧：控制按钮 -->
-    <div class="right-panel">
-      <div class="control-buttons">
-        <button 
-          class="btn-launch" 
-          :class="{ disabled: isRunning }"
-          @click="handleLaunch"
-          :disabled="isRunning"
-        >
-          {{ isRunning ? '启动爬取中...' : '手动启动爬取' }}
-        </button>
-        <button 
-          class="btn-stop" 
-          :class="{ disabled: !isRunning }"
-          @click="handleStop"
-          :disabled="!isRunning"
-        >
-          停止
-        </button>
-      </div>
-    </div>
+    <h3 class="mg-b">当前任务执行情况</h3>
+    <el-card class="top mg-b" header="">
+      <el-row>
+        <el-col :span="20">
+          <el-form :mode="query" inline class="only-one">
+            <el-form-item label="任务日期">
+              <el-date-picker
+                  v-model="query.date"
+                  type="date"
+                  placeholder="请选择日期"
+                  @change="getData"
+              />
+            </el-form-item>
+            <el-form-item label="">
+              <span class="tips"> 本日剩余未导入数据项 {{ onloadCount }} 项 </span>
+            </el-form-item>
+          </el-form>
+        </el-col>
+<!--        <el-col :span="4" style="text-align: right">-->
+<!--          <el-space direction="vertical">-->
+<!--            <el-button type="primary" :icon="Setting" @click="handleShowTaskConfig"-->
+<!--            >-->
+<!--              任务设置-->
+<!--            </el-button>-->
+<!--            &lt;!&ndash; <el-button type="primary" :icon="Upload">批量导入</el-button> &ndash;&gt;-->
+<!--          </el-space>-->
+<!--        </el-col>-->
+      </el-row>
+    </el-card>
+    <el-card>
+      <el-table  :data="list" :loading="loading" row-key="id" border default-expand-all>
+<!--        <el-table-column prop="dataType" label="数据类型" width="300"></el-table-column>-->
+<!--        <el-table-column prop="day" label="数据日期">-->
+<!--          <template #default="scope">-->
+<!--            {{ scope.row.importUri ? getDDay(scope.row.day) : '' }}-->
+<!--          </template>-->
+<!--        </el-table-column>-->
+        <el-table-column prop="taskId" label="任务ID">
+        </el-table-column>
+        <el-table-column prop="dataType" label="数据日期">
+          <template #default="scope">
+            {{ scope.row.importDay ? getDDay(scope.row.importDay) : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="size" label="数据数量"></el-table-column>
+        <el-table-column prop="status" label="数据状态">
+          <template #default="scope">
+            <el-tag :size="'small'" :type="scope.row.size ? 'success' : 'warning'">{{
+                (scope.row.size ? '已采集' : '未采集')
+              }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="modifyTime" label="更新时间">
+          <template #default="scope">
+            {{
+              scope.row.modifyTime
+                  ? getTime(scope.row.modifyTime)
+                  : getTime(scope.row.createTime)
+            }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
-import EchartsComponent from '../components/EchartsComponent.vue'
+import {ref, onUnmounted, onMounted, reactive} from 'vue'
+import {getCurrentUser} from "../api/login.ts";
+import $dayjs from 'dayjs'
+import {DayLoadRes, getDayLoadDataList} from "../api/dataManagement.ts";
 
-const collectionSettings = localStorage.getItem('collectionSettings') ? JSON.parse(localStorage.getItem('collectionSettings') || '{}') : {
-  "frequency": "*/5 * * * *",
-  "startTime": "2023-10-01T00:00:00"
-}
-const startTime = new Date(collectionSettings.startTime)
-const runTime = ref('')
-const isRunning = ref(false)
+const list = ref<DayLoadRes[]>([])
+const loading = ref(false)
+const query = reactive({
+  date: new Date().getTime(),
+  status: 'all',
+})
 
-let runtimeIntervalId: number | null = null
-
-// 模拟每日运行成功率数据
-const successRateData = ref<number[]>([
-  95, 92, 98, 90, 94, 96, 93
-])
-
-// 生成最近7天的日期标签
-const generateLastSevenDays = (): string[] => {
-  const labels: string[] = []
-  const today = new Date()
-  
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today)
-    date.setDate(today.getDate() - i)
-    
-    // 获取月份和日期
-    const month = date.getMonth() + 1 // 月份从0开始，需要+1
-    const day = date.getDate()
-    
-    labels.push(`${month}/${day}`)
-  }
-  
-  return labels
+const getData = async () => {
+  try {
+    loading.value = true
+    list.value = await getDayLoadDataList({importDay: query.date})
+    list.value.push({
+      id: -1,
+      "taskId": 0,
+      "importDay": new Date().getTime(),
+      "size": 0,
+      createTime: new Date().getTime()
+    })
+    console.log(list.value, 'list.value')
+  } catch (error) {}
+  loading.value = false
 }
 
-const labels = ref<string[]>(generateLastSevenDays())
 
-// 计算运行时间的函数
-const calculateRunTime = (): string => {
-  const now = new Date()
-  const diffMs = now.getTime() - startTime.getTime()
-  
-  // 计算天、小时、分钟、秒
-  const totalSeconds = Math.floor(diffMs / 1000)
-  const days = Math.floor(totalSeconds / (24 * 3600))
-  const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  
-  // 格式化输出
-  let timeString = ''
-  if (days > 0) {
-    timeString += `${days}天 `
-  }
-  timeString += `${hours.toString().padStart(2, '0')}时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒`
-  
-  return timeString
+const onloadCount = ref(0)
+
+const userInfo = ref<any>({})
+
+
+// 计算D-day日时间
+const getDDay = (day: number) => {
+  return day
+      ? $dayjs(day).format('YYYY-MM-DD')
+      : ''
 }
 
-// 更新运行时间
-const updateRunTime = () => {
-  runTime.value = calculateRunTime()
+// const getDDayValue = (day: number) => {
+//   return day
+//       ? $dayjs(query.date).subtract(day, 'day').valueOf()
+//       : $dayjs(query.date).valueOf()
+// }
+const getTime = (date: number | Date) => {
+  return date ? $dayjs(date).format('YYYY-MM-DD HH:mm') : ''
 }
 
-// 启动按钮处理
-const handleLaunch = () => {
-  isRunning.value = true
-  // 这里可以添加实际的启动逻辑
-  console.log('启动应用')
-}
 
-// 停止按钮处理
-const handleStop = () => {
-  isRunning.value = false
-  // 这里可以添加实际的停止逻辑
-  console.log('停止应用')
-}
 
-// 初始化运行时间
-updateRunTime()
-
-// 启动定时器更新运行时间
-runtimeIntervalId = window.setInterval(updateRunTime, 1000)
+onMounted(async () => {
+  const info = await getCurrentUser()
+  userInfo.value = info
+  getData()
+})
 
 // 组件卸载时清理定时器
 onUnmounted(() => {
-  if (runtimeIntervalId !== null) {
-    clearInterval(runtimeIntervalId)
-  }
+
 })
 </script>
 
@@ -146,13 +141,8 @@ onUnmounted(() => {
 .page {
   position: relative;
   width: 100%;
-  height: 100vh;
-  display: grid;
-  grid-template-columns: 2fr 1fr; /* 左侧占2份，右侧占1份 */
-  gap: 20px;
-  /* padding: 20px; */
+  //height: 100vh;
   box-sizing: border-box;
-  /* background-color: white; */
 }
 
 .page-bg {
