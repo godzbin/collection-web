@@ -88,14 +88,14 @@ const query = reactive({
 const getData = async () => {
   try {
     loading.value = true
-    list.value = await getDayLoadDataList({importDay: query.date})
-    list.value.push({
-      id: -1,
-      "taskId": 0,
-      "importDay": new Date().getTime(),
-      "size": 0,
-      createTime: new Date().getTime()
-    })
+    list.value = await getDayLoadDataList({importDay: $dayjs(query.date).valueOf()})
+    // list.value.push({
+    //   id: -1,
+    //   "taskId": 0,
+    //   "importDay": new Date().getTime(),
+    //   "size": 0,
+    //   createTime: new Date().getTime()
+    // })
     console.log(list.value, 'list.value')
   } catch (error) {}
   loading.value = false

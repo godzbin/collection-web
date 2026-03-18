@@ -16,6 +16,7 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 // 4. 引入所有图标并注册为全局组件
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 
+
 const app = createApp(App);
 
 app.use(router);

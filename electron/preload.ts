@@ -18,14 +18,30 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     const [channel, ...omit] = args
     return ipcRenderer.invoke(channel, ...omit)
   },
-
   // You can expose other APTs you need here.
   // ...
 })
 
-// 暴露 API 到渲染进程
 contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.invoke('window-minimize'),
   maximize: () => ipcRenderer.invoke('window-maximize'),
-  close: () => ipcRenderer.invoke('window-close')
+  close: () => ipcRenderer.invoke('window-close'),
+  readLog: (filePath: string) => ipcRenderer.invoke('read-local-log', filePath),
+  startLogWatch: (filePath: string) => ipcRenderer.invoke('start-log-watch', filePath),
+  stopLogWatch: () => ipcRenderer.invoke('stop-log-watch'),
+  // 用于接收来自主进程的消息
+  onLogFileChanged: (callback: (newData: string) => void) => {
+    ipcRenderer.on('log-file-changed', (_, newData) => callback(newData));
+  },
+  offLogFileChanged: () => {
+    ipcRenderer.removeAllListeners('log-file-changed');
+  },
+  onLogWatchError: (callback: (error: string) => void) => {
+    ipcRenderer.on('log-watch-error', (_, error) => callback(error));
+  },
+  offLogWatchError: () => {
+    ipcRenderer.removeAllListeners('log-watch-error');
+  }
 })
+
+

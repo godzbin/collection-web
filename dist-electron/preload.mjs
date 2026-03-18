@@ -1,1 +1,26 @@
-"use strict";const e=require("electron");e.contextBridge.exposeInMainWorld("ipcRenderer",{on(...n){const[i,r]=n;return e.ipcRenderer.on(i,(o,...c)=>r(o,...c))},off(...n){const[i,...r]=n;return e.ipcRenderer.off(i,...r)},send(...n){const[i,...r]=n;return e.ipcRenderer.send(i,...r)},invoke(...n){const[i,...r]=n;return e.ipcRenderer.invoke(i,...r)}});e.contextBridge.exposeInMainWorld("electronAPI",{minimize:()=>e.ipcRenderer.invoke("window-minimize"),maximize:()=>e.ipcRenderer.invoke("window-maximize"),close:()=>e.ipcRenderer.invoke("window-close")});
+"use strict";
+const electron = require("electron");
+electron.contextBridge.exposeInMainWorld("ipcRenderer", {
+  on(...args) {
+    const [channel, listener] = args;
+    return electron.ipcRenderer.on(channel, (event, ...args2) => listener(event, ...args2));
+  },
+  off(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.off(channel, ...omit);
+  },
+  send(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.send(channel, ...omit);
+  },
+  invoke(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.invoke(channel, ...omit);
+  },
+  minimize: () => electron.ipcRenderer.invoke("window-minimize"),
+  maximize: () => electron.ipcRenderer.invoke("window-maximize"),
+  close: () => electron.ipcRenderer.invoke("window-close"),
+  readLog: (filePath) => electron.ipcRenderer.invoke("read-local-log", filePath)
+  // You can expose other APTs you need here.
+  // ...
+});

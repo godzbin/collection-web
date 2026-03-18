@@ -34,7 +34,7 @@
       <div 
         v-for="(log, index) in filteredLogs" 
         :key="index" 
-        :class="['log-entry', `log-${log.level}`]"
+        :class="['log-entry', `log-${log.level.toLowerCase()}`]"
       >
         <div class="log-time">{{ formatTime(log.timestamp) }}</div>
         <div class="log-level">{{ log.level.toUpperCase() }}</div>
@@ -53,8 +53,8 @@ import { ref, computed, nextTick, watch } from 'vue'
 
 // 定义日志类型
 interface LogEntry {
-  timestamp: Date;
-  level: 'info' | 'warn' | 'error' | 'debug';
+  timestamp: Date | string;
+  level: string | 'info' | 'warn' | 'error' | 'debug';
   message: string;
 }
 
@@ -103,9 +103,11 @@ watch(
 )
 
 // 格式化时间
-const formatTime = (timestamp: Date) => {
+const formatTime = (timestamp: Date | string) => {
   return new Date(timestamp).toLocaleTimeString('zh-CN', {
     hour12: false,
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
@@ -256,7 +258,7 @@ const emit = defineEmits<{
 
 .log-time {
   color: #64748b;
-  min-width: 100px;
+  min-width: 120px;
   flex-shrink: 0;
 }
 
