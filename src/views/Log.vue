@@ -9,7 +9,7 @@
             v-model="watching"
             active-text="监听中"
             inactive-text="未监听"
-            @change="toggleWatch"
+            @change="handleSwitchChange"
         />
       </div>
     </div>
@@ -27,8 +27,8 @@ import LogDisplay from '../components/LogDisplay.vue'
 
 // 日志类型定义
 interface LogEntry {
-  timestamp: String;
-  level: String | 'info' | 'warn' | 'error' | 'debug';
+  timestamp: Date | string;
+  level: string | 'info' | 'warn' | 'error' | 'debug';
   message: string;
 }
 
@@ -38,7 +38,9 @@ const maxLogs = ref(1000)
 const watching = ref(false) // 监听状态
 const logPath = '/Users/zebinchen/Desktop/log/collect-data.log'; // 日志文件路径
 
-
+const handleSwitchChange = (val:  string | number | boolean): any => {
+  toggleWatch(val)
+}
 
 // 清空日志
 const handleClearLogs = () => {
@@ -99,7 +101,7 @@ const handleWatchError = (errorMessage: string) => {
 };
 
 // 切换监听状态
-const toggleWatch = async (shouldWatch: boolean) => {
+const toggleWatch = async (shouldWatch :  string | number | boolean) => {
   if (shouldWatch) {
     try {
       const result = await window.electronAPI.startLogWatch(logPath);
