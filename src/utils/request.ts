@@ -10,7 +10,7 @@ import axios, {
 import { ElMessage } from "element-plus";
 console.log(import.meta.env.MODE);
 // const baseUrl = import.meta.env.VITE_BASE_URL;
-const baseUrl = 'http://192.168.1.169:9980/'
+const baseUrl = 'http://localhost:9980/'
 console.log(baseUrl, 'baseUrl', import.meta.env.DEV);
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.DEV  ? '/api' : baseUrl,

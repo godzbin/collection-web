@@ -61,7 +61,36 @@
           </div>
         </div>
       </div>
-      
+
+      <!-- 在 .setting-steps 容器内，第二步之后添加 -->
+      <!-- 第三步：Log 文件地址设置 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <div class="step-title">Log 文件地址配置</div>
+        </div>
+        <div class="step-content">
+          <div class="log-path-picker">
+            <label>Log 文件存储路径：</label>
+            <div class="input-group">
+              <input
+                  v-model="logFilePath"
+                  type="text"
+                  placeholder="例如: /var/logs/collection/app.log"
+                  class="path-input"
+              />
+              <!-- 如果有选择文件夹的需求，可以预留按钮位置 -->
+              <!-- <button class="select-btn">选择...</button> -->
+            </div>
+            <div class="path-hint">
+              <p><strong>说明：</strong></p>
+              <p>请确保应用对该路径有读写权限。</p>
+              <p>当前配置：<strong>{{ logFilePath || '未设置' }}</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 保存按钮 -->
       <div class="save-section">
         <button @click="saveSettings" class="save-btn">保存设置</button>
@@ -89,6 +118,7 @@ const frequencyOptions = [
 const selectedFrequency = ref('* * * * *')
 const customCron = ref('')
 const startTime = ref('')
+const logFilePath = ref('') // 新增：Log 文件路径
 
 // 计算属性：格式化开始时间
 const formattedStartTime = computed(() => {
@@ -107,7 +137,8 @@ const selectFrequency = (value: string) => {
 const saveSettings = () => {
   const settings = {
     frequency: customCron.value || selectedFrequency.value,
-    startTime: startTime.value
+    startTime: startTime.value,
+    logFilePath: logFilePath.value // 新增：保存路径
   }
   
   localStorage.setItem('collectionSettings', JSON.stringify(settings))
@@ -120,6 +151,7 @@ const resetSettings = () => {
     selectedFrequency.value = '* * * * *'
     customCron.value = ''
     startTime.value = ''
+    logFilePath.value = '' // 新增：重置路径
     localStorage.removeItem('collectionSettings')
     alert('已重置为默认设置')
   }
@@ -132,18 +164,20 @@ const loadSettings = () => {
     try {
       const settings = JSON.parse(savedSettings)
       if (settings.frequency) {
-        // 检查是否是预设选项之一
         const presetOption = frequencyOptions.find(opt => opt.value === settings.frequency)
         if (presetOption) {
           selectedFrequency.value = settings.frequency
         } else {
-          // 如果是自定义的cron表达式
           customCron.value = settings.frequency
-          selectedFrequency.value = '' // 清空预设选项
+          selectedFrequency.value = ''
         }
       }
       if (settings.startTime) {
         startTime.value = settings.startTime
+      }
+      // 新增：加载路径
+      if (settings.logFilePath !== undefined) {
+        logFilePath.value = settings.logFilePath
       }
     } catch (e) {
       console.error('加载设置时出错:', e)
@@ -392,4 +426,53 @@ onMounted(() => {
     flex-direction: column;
   }
 }
+/* 新增 Log 路径配置样式 */
+.log-path-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.log-path-picker label {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.path-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.path-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.path-hint {
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  border-left: 4px solid #64748b;
+}
+
+.path-hint p {
+  margin: 4px 0;
+}
+
+.path-hint strong {
+  color: #1e293b;
+}
+
 </style>

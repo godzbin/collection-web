@@ -21,8 +21,9 @@
   </div>
 </template>
 
-<script setup lang="ts">import { ref, onMounted, onUnmounted } from 'vue'
-import { ElSwitch } from 'element-plus' // 引入开关组件
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+import { ElSwitch, ElMessage } from 'element-plus' // 引入开关组件
 import LogDisplay from '../components/LogDisplay.vue'
 
 // 日志类型定义
@@ -36,7 +37,7 @@ interface LogEntry {
 const logs = ref<LogEntry[]>([])
 const maxLogs = ref(1000)
 const watching = ref(false) // 监听状态
-const logPath = '/Users/zebinchen/Desktop/log/collect-data.log'; // 日志文件路径
+const logPath = ref(''); // 日志文件路径
 
 const handleSwitchChange = (val:  string | number | boolean): any => {
   toggleWatch(val)
@@ -104,7 +105,7 @@ const handleWatchError = (errorMessage: string) => {
 const toggleWatch = async (shouldWatch :  string | number | boolean) => {
   if (shouldWatch) {
     try {
-      const result = await window.electronAPI.startLogWatch(logPath);
+      const result = await window.electronAPI.startLogWatch(logPath.value);
       if (result.success) {
         console.log(result.message);
         watching.value = true;
@@ -133,9 +134,27 @@ const toggleWatch = async (shouldWatch :  string | number | boolean) => {
 
 // 模拟一些日志数据
 onMounted(async () => {
+  // /Users/zebinchen/Desktop/log/collect-data.log
+  const savedSettings = localStorage.getItem('collectionSettings')
+  if (savedSettings) {
+    try {
+      const settings = JSON.parse(savedSettings)
+      // 新增：加载路径
+      if (settings.logFilePath !== undefined) {
+        logPath.value = settings.logFilePath
+      }
+    } catch (e) {
+      console.error('加载设置时出错:', e)
+    }
+  }
+
+  if (!logPath.value) {
+    ElMessage.error('没有配置日志读取。')
+  }
+
   // 初始加载一次日志
   try {
-    const result = await window.electronAPI.readLog(logPath);
+    const result = await window.electronAPI.readLog(logPath.value);
     if (result.success && result.data) {
       const initialLogs = result.data
           .map(line => parseLogLine(line))
@@ -151,12 +170,17 @@ onMounted(async () => {
     console.error('初始加载 IPC 调用错误', e);
   }
 
+
+
   // 注册事件监听器
   window.electronAPI.onLogFileChanged(handleFileChange);
   window.electronAPI.onLogWatchError(handleWatchError);
 
   // 如果需要默认开始监听，取消下面的注释
   toggleWatch(true);
+  // 获取logPath配置
+  // logPath.value =
+
 });
 
 onUnmounted(() => {
