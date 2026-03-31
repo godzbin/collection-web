@@ -39,6 +39,11 @@
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}",
     "icon": "public/icon.png"
   },
+  "fileAssociations": [],
+  "detectUpdateChannel": false,
+  "generateUpdatesFilesForAllChannels": false,
+  "asarUnpack": [],
+  "extraMetadata": {},
   "nsis": {
     "oneClick": false,
     "perMachine": false,
