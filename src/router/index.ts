@@ -8,11 +8,20 @@ import {
 import Home from "../views/Home.vue";
 import {getToken} from "../utils/auth.ts"; // 我们将创建这个组件
 
+// @ts-ignore
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Home",
     component: Home,
+  },
+  {
+    path: "/taskList",
+    name: "TaskList",
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: () => import("../views/TaskList.vue"), // 懒加载
   },
   {
     path: "/log",
@@ -48,7 +57,7 @@ const router = createRouter({
 });
 
 // 定义不需要登录即可访问的白名单
-const whiteList = ['/login'];
+const whiteList = ['/login', '/taskList'];
 
 // 全局前置守卫
 router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
@@ -62,11 +71,12 @@ router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, n
   // 2. 判断目标路由是否在白名单中
   if (whiteList.includes(to.path)) {
     // 如果在白名单（如登录页）且有 token，通常建议重定向到首页，防止已登录用户再次看到登录页
-    if (token) {
-      next({ path: '/' });
-    } else {
-      next();
-    }
+    // if (token) {
+    //   next({ path: '/' });
+    // } else {
+    //   next();
+    // }
+    next()
   } else {
     // 3. 不在白名单（需要登录的页面）
     if (token) {

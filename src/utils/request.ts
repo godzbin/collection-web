@@ -8,7 +8,7 @@ import axios, {
   InternalAxiosRequestConfig
 } from "axios";
 import { ElMessage } from "element-plus";
-console.log(import.meta.env.MODE);
+
 // const baseUrl = import.meta.env.VITE_BASE_URL;
 const baseUrl = 'http://localhost:9980/'
 console.log(baseUrl, 'baseUrl', import.meta.env.DEV);

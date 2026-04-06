@@ -1,91 +1,75 @@
 <template>
   <div class="setting-page">
     <h2>系统设置</h2>
-    
+
     <div class="setting-steps">
-      <!-- 第一步：采集频率设置 -->
+      <!-- 第一步：服务地址配置 -->
       <div class="step">
         <div class="step-header">
           <div class="step-number">1</div>
-          <div class="step-title">采集频率设置</div>
+          <div class="step-title">服务地址配置</div>
         </div>
         <div class="step-content">
-          <div class="frequency-options">
-            <div 
-              v-for="option in frequencyOptions" 
-              :key="option.value"
-              class="frequency-option"
-              :class="{ active: selectedFrequency === option.value }"
-              @click="selectFrequency(option.value)"
-            >
-              <span class="option-label">{{ option.label }}</span>
-              <span class="option-desc">{{ option.desc }}</span>
-            </div>
-            
-            <div class="custom-frequency">
-              <label>自定义定时器格式：</label>
-              <input 
-                v-model="customCron" 
-                type="text" 
-                placeholder="例如: */5 * * * * (每5分钟执行)"
-                class="cron-input"
-              />
-              <div class="cron-hint">
-                <p><strong>Cron 格式说明：</strong></p>
-                <p><code>* * * * *</code> - 分钟 小时 日 月 星期</p>
-                <p>例如：<code>*/5 * * * *</code> 表示每5分钟执行一次</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 第二步：采集开始时间设置 -->
-      <div class="step">
-        <div class="step-header">
-          <div class="step-number">2</div>
-          <div class="step-title">设置采集开始时间</div>
-        </div>
-        <div class="step-content">
-          <div class="datetime-picker">
-            <label>选择开始时间：</label>
-            <input 
-              v-model="startTime" 
-              type="datetime-local" 
-              class="datetime-input"
+          <div class="setting-item">
+            <label>后端服务地址：</label>
+            <input
+                v-model="config.serviceUrl"
+                type="text"
+                placeholder="例如: http://192.168.1.169:9980/"
+                class="setting-input"
             />
-            <div class="current-time">
-              <p>当前设置的开始时间：<strong>{{ formattedStartTime || '未设置' }}</strong></p>
-              <p class="time-desc">此时间将作为计算运行时长的起始点</p>
+            <div class="setting-hint">
+              <p><strong>说明：</strong></p>
+              <p>配置后端 API 服务的完整地址，需包含协议和端口号。</p>
+              <p>当前配置：<strong>{{ config.serviceUrl || '未设置' }}</strong></p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 在 .setting-steps 容器内，第二步之后添加 -->
-      <!-- 第三步：Log 文件地址设置 -->
+      <!-- 第二步：XXL-Job 地址配置 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div class="step-title">XXL-Job 地址配置</div>
+        </div>
+        <div class="step-content">
+          <div class="setting-item">
+            <label>XXL-Job 管理后台地址：</label>
+            <input
+                v-model="config.xxlJobUrl"
+                type="text"
+                placeholder="例如: http://192.168.1.18:38080/xxl-job-admin"
+                class="setting-input"
+            />
+            <div class="setting-hint">
+              <p><strong>说明：</strong></p>
+              <p>配置 XXL-Job 调度中心的完整地址。</p>
+              <p>当前配置：<strong>{{ config.xxlJobUrl || '未设置' }}</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 第三步：Log 文件地址配置 -->
       <div class="step">
         <div class="step-header">
           <div class="step-number">3</div>
           <div class="step-title">Log 文件地址配置</div>
         </div>
         <div class="step-content">
-          <div class="log-path-picker">
+          <div class="setting-item">
             <label>Log 文件存储路径：</label>
-            <div class="input-group">
-              <input
-                  v-model="logFilePath"
-                  type="text"
-                  placeholder="例如: /var/logs/collection/app.log"
-                  class="path-input"
-              />
-              <!-- 如果有选择文件夹的需求，可以预留按钮位置 -->
-              <!-- <button class="select-btn">选择...</button> -->
-            </div>
-            <div class="path-hint">
+            <input
+                v-model="config.logFilePath"
+                type="text"
+                placeholder="例如: /var/logs/collection/app.log"
+                class="setting-input"
+            />
+            <div class="setting-hint">
               <p><strong>说明：</strong></p>
               <p>请确保应用对该路径有读写权限。</p>
-              <p>当前配置：<strong>{{ logFilePath || '未设置' }}</strong></p>
+              <p>当前配置：<strong>{{ config.logFilePath || '未设置' }}</strong></p>
             </div>
           </div>
         </div>
@@ -93,110 +77,141 @@
 
       <!-- 保存按钮 -->
       <div class="save-section">
-        <button @click="saveSettings" class="save-btn">保存设置</button>
-        <button @click="resetSettings" class="reset-btn">重置为默认</button>
+        <button @click="handleSave" class="save-btn" :disabled="loading">
+          {{ loading ? '保存中...' : '保存设置' }}
+        </button>
+        <button @click="handleReset" class="reset-btn" :disabled="loading">
+          重置为默认
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 
-// 定义频率选项
-const frequencyOptions = [
-  { label: '每分钟', value: '* * * * *', desc: '每分钟执行一次' },
-  { label: '每5分钟', value: '*/5 * * * *', desc: '每5分钟执行一次' },
-  { label: '每10分钟', value: '*/10 * * * *', desc: '每10分钟执行一次' },
-  { label: '每30分钟', value: '*/30 * * * *', desc: '每30分钟执行一次' },
-  { label: '每小时', value: '0 * * * *', desc: '每小时执行一次' },
-  { label: '每天', value: '0 0 * * *', desc: '每天午夜执行一次' },
-  { label: '每周', value: '0 0 * * 0', desc: '每周日凌晨执行一次' }
-]
+interface ConfigType {
+  serviceUrl: string
+  xxlJobUrl: string
+  logFilePath: string
+}
 
-// 状态
-const selectedFrequency = ref('* * * * *')
-const customCron = ref('')
-const startTime = ref('')
-const logFilePath = ref('') // 新增：Log 文件路径
-
-// 计算属性：格式化开始时间
-const formattedStartTime = computed(() => {
-  if (!startTime.value) return null
-  const date = new Date(startTime.value)
-  return date.toLocaleString('zh-CN')
+// 配置数据
+const config = ref<ConfigType>({
+  serviceUrl: '',
+  xxlJobUrl: '',
+  logFilePath: ''
 })
 
-// 选择频率
-const selectFrequency = (value: string) => {
-  selectedFrequency.value = value
-  customCron.value = '' // 清空自定义输入
-}
+const loading = ref(false)
 
-// 保存设置到本地存储
-const saveSettings = () => {
-  const settings = {
-    frequency: customCron.value || selectedFrequency.value,
-    startTime: startTime.value,
-    logFilePath: logFilePath.value // 新增：保存路径
-  }
-  
-  localStorage.setItem('collectionSettings', JSON.stringify(settings))
-  alert('设置已保存！')
-}
-
-// 重置为默认设置
-const resetSettings = () => {
-  if (confirm('确定要重置为默认设置吗？')) {
-    selectedFrequency.value = '* * * * *'
-    customCron.value = ''
-    startTime.value = ''
-    logFilePath.value = '' // 新增：重置路径
-    localStorage.removeItem('collectionSettings')
-    alert('已重置为默认设置')
-  }
-}
-
-// 从本地存储加载设置
-const loadSettings = () => {
-  const savedSettings = localStorage.getItem('collectionSettings')
-  if (savedSettings) {
-    try {
-      const settings = JSON.parse(savedSettings)
-      if (settings.frequency) {
-        const presetOption = frequencyOptions.find(opt => opt.value === settings.frequency)
-        if (presetOption) {
-          selectedFrequency.value = settings.frequency
-        } else {
-          customCron.value = settings.frequency
-          selectedFrequency.value = ''
-        }
+// 加载配置
+const loadConfig = async () => {
+  try {
+    if (window.electronAPI) {
+      const result = await window.electronAPI.getConfig()
+      if (result.success) {
+        config.value = result.data
+        console.log('✅ 配置加载成功:', config.value)
+      } else {
+        console.error('❌ 配置加载失败')
       }
-      if (settings.startTime) {
-        startTime.value = settings.startTime
+    } else {
+      // 非 Electron 环境，使用 localStorage
+      const saved = localStorage.getItem('systemConfig')
+      if (saved) {
+        config.value = JSON.parse(saved)
       }
-      // 新增：加载路径
-      if (settings.logFilePath !== undefined) {
-        logFilePath.value = settings.logFilePath
-      }
-    } catch (e) {
-      console.error('加载设置时出错:', e)
     }
+  } catch (error) {
+    console.error('加载配置时出错:', error)
+    ElMessage.error('加载配置失败')
   }
 }
 
-// 组件挂载时加载设置
+// 保存配置
+const handleSave = async () => {
+  // 验证必填项
+  if (!config.value.serviceUrl.trim()) {
+    ElMessage.warning('请输入后端服务地址')
+    return
+  }
+
+  if (!config.value.xxlJobUrl.trim()) {
+    ElMessage.warning('请输入 XXL-Job 管理后台地址')
+    return
+  }
+
+  loading.value = true
+
+  try {
+    if (window.electronAPI) {
+      // Electron 环境，保存到文件
+      const result = await window.electronAPI.saveConfig(config.value)
+      if (result.success) {
+        ElMessage.success('配置已保存')
+        // 保存后刷新页面使配置生效
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+      } else {
+        ElMessage.error(result.message || '保存失败')
+      }
+    } else {
+      // 非 Electron 环境，使用 localStorage
+      localStorage.setItem('systemConfig', JSON.stringify(config.value))
+      ElMessage.success('配置已保存')
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+    }
+  } catch (error) {
+    console.error('保存配置时出错:', error)
+    ElMessage.error('保存配置失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 重置配置
+const handleReset = async () => {
+  try {
+    if (window.electronAPI) {
+      const result = await window.electronAPI.resetConfig()
+      if (result.success) {
+        config.value = result.data
+        ElMessage.success('已重置为默认配置')
+      } else {
+        ElMessage.error(result.message || '重置失败')
+      }
+    } else {
+      localStorage.removeItem('systemConfig')
+      config.value = {
+        serviceUrl: 'http://192.168.1.169:9980/',
+        xxlJobUrl: 'http://192.168.1.18:38080/xxl-job-admin',
+        logFilePath: ''
+      }
+      ElMessage.success('已重置为默认配置')
+    }
+  } catch (error) {
+    console.error('重置配置时出错:', error)
+    ElMessage.error('重置配置失败')
+  }
+}
+
+// 组件挂载时加载配置
 onMounted(() => {
-  loadSettings()
+  loadConfig()
 })
 </script>
 
 <style scoped>
 .setting-page {
-  /* padding: 20px; */
-  /* background-color: white; */
   min-height: 100vh;
-	overflow: auto;
+  overflow: auto;
+  padding: 20px;
 }
 
 .setting-page h2 {
@@ -250,125 +265,48 @@ onMounted(() => {
   padding: 20px;
 }
 
-.frequency-options {
+.setting-item {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.frequency-option {
-  padding: 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.frequency-option:hover {
-  border-color: #94a3b8;
-  background-color: #f1f5f9;
-}
-
-.frequency-option.active {
-  border-color: #10b981;
-  background-color: #ecfdf5;
-}
-
-.option-label {
-  display: block;
+.setting-item label {
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 4px;
 }
 
-.option-desc {
-  font-size: 0.9rem;
-  color: #64748b;
-}
-
-.custom-frequency {
-  padding: 16px;
-  border: 2px dashed #cbd5e1;
-  border-radius: 8px;
-  background-color: #f8fafc;
-}
-
-.custom-frequency label {
-  display: block;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-}
-
-.cron-input {
-  width: 100%;
+.setting-input {
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-family: monospace;
   font-size: 0.9rem;
+  width: 100%;
+  max-width: 500px;
 }
 
-.cron-input:focus {
+.setting-input:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
-.cron-hint {
-  margin-top: 12px;
+.setting-hint {
+  margin-top: 8px;
   padding: 12px;
-  background-color: #f1f5f9;
+  background-color: #f8fafc;
   border-radius: 6px;
   font-size: 0.85rem;
+  border-left: 4px solid #64748b;
 }
 
-.cron-hint code {
-  background-color: #e2e8f0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: monospace;
-}
-
-.datetime-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.datetime-picker label {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.datetime-input {
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  width: 250px;
-}
-
-.datetime-input:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-}
-
-.current-time {
-  margin-top: 16px;
-  padding: 12px;
-  background-color: #f0fdf4;
-  border-left: 4px solid #10b981;
-  border-radius: 0 6px 6px 0;
-}
-
-.current-time p {
+.setting-hint p {
   margin: 4px 0;
 }
 
-.time-desc {
-  font-size: 0.9rem;
-  color: #64748b;
+.setting-hint strong {
+  color: #1e293b;
 }
 
 .save-section {
@@ -393,9 +331,14 @@ onMounted(() => {
   color: white;
 }
 
-.save-btn:hover {
+.save-btn:hover:not(:disabled) {
   background-color: #059669;
   transform: translateY(-2px);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .reset-btn {
@@ -403,9 +346,14 @@ onMounted(() => {
   color: white;
 }
 
-.reset-btn:hover {
+.reset-btn:hover:not(:disabled) {
   background-color: #64748b;
   transform: translateY(-2px);
+}
+
+.reset-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* 响应式设计 */
@@ -413,66 +361,17 @@ onMounted(() => {
   .setting-page {
     padding: 12px;
   }
-  
+
   .step-content {
     padding: 16px;
   }
-  
-  .datetime-input {
-    width: 100%;
+
+  .setting-input {
+    max-width: 100%;
   }
-  
+
   .save-section {
     flex-direction: column;
   }
 }
-/* 新增 Log 路径配置样式 */
-.log-path-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.log-path-picker label {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.input-group {
-  display: flex;
-  gap: 8px;
-}
-
-.path-input {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-family: monospace;
-  font-size: 0.9rem;
-}
-
-.path-input:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-}
-
-.path-hint {
-  margin-top: 8px;
-  padding: 12px;
-  background-color: #f8fafc;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  border-left: 4px solid #64748b;
-}
-
-.path-hint p {
-  margin: 4px 0;
-}
-
-.path-hint strong {
-  color: #1e293b;
-}
-
 </style>

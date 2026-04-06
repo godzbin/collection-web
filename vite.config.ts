@@ -60,6 +60,11 @@ export default defineConfig({
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, ''),
             },
+            '/xxl-job-admin': {
+                target: 'http://192.168.1.18:38080/',
+                changeOrigin: true,
+                // rewrite: (path) => path.replace(/^\/xxl-job-admin/, ''),
+            },
         },
     },
 })

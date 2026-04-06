@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, net } from "electron";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import fs from 'fs';
@@ -6,6 +6,53 @@ import fs from 'fs';
 // 解决 __dirname 在 ES 模块中的问题
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// 配置文件路径 - 使用 userData 目录，保证软件更新时配置不丢失
+const CONFIG_FILE_PATH = path.join(app.getPath('userData'), 'config.json');
+
+// 默认配置
+const DEFAULT_CONFIG = {
+  serviceUrl: 'http://192.168.1.169:9980/',
+  xxlJobUrl: 'http://192.168.1.18:38080/xxl-job-admin',
+  logFilePath: ''
+};
+
+// 读取配置文件
+function readConfig(): any {
+  try {
+    if (fs.existsSync(CONFIG_FILE_PATH)) {
+      const data = fs.readFileSync(CONFIG_FILE_PATH, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('读取配置文件失败:', error);
+  }
+  return DEFAULT_CONFIG;
+}
+
+// 保存配置文件
+function saveConfig(config: any): boolean {
+  try {
+    const configData = {
+      serviceUrl: config.serviceUrl || DEFAULT_CONFIG.serviceUrl,
+      xxlJobUrl: config.xxlJobUrl || DEFAULT_CONFIG.xxlJobUrl,
+      logFilePath: config.logFilePath || ''
+    };
+
+    // 确保目录存在
+    const configDir = path.dirname(CONFIG_FILE_PATH);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+
+    fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify(configData, null, 2), 'utf-8');
+    console.log('✅ 配置文件已保存:', CONFIG_FILE_PATH);
+    return true;
+  } catch (error) {
+    console.error('保存配置文件失败:', error);
+    return false;
+  }
+}
 
 // 轮询相关状态
 let pollTimer: NodeJS.Timeout | null = null;
@@ -59,6 +106,30 @@ app.whenReady().then(() => {
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+
+  // --- 配置文件读写 IPC ---
+  ipcMain.handle('get-config', async () => {
+    console.log('📖 读取配置文件');
+    const config = readConfig();
+    return { success: true, data: config };
+  });
+
+  ipcMain.handle('save-config', async (event: any, config: any) => {
+    console.log('💾 保存配置文件:', event, config);
+    const success = saveConfig(config);
+    return { success, message: success ? '保存成功' : '保存失败' };
+  });
+
+  ipcMain.handle('reset-config', async () => {
+    console.log('🔄 重置配置文件');
+    const success = saveConfig(DEFAULT_CONFIG);
+    return {
+      success,
+      message: success ? '重置成功' : '重置失败',
+      data: DEFAULT_CONFIG
+    };
+  });
+
 
   // --- 启动轮询监听 ---
   ipcMain.handle('start-log-watch', async (event: any, logPath: string) => {
@@ -200,7 +271,78 @@ app.whenReady().then(() => {
       return { success: false, error: error.message };
     }
   });
+
+  // --- XXL-Job 登录接口（在主进程处理，避免 CORS）---
+  ipcMain.handle('xxl-job-login', async (event: any, payload: {
+    baseUrl: string;
+    username: string;
+    password: string;
+  }) => {
+    console.log('xxl-job', event)
+    const { baseUrl, username, password } = payload;
+
+    console.log('🔐 收到 XXL-Job 登录请求:', baseUrl);
+
+    return new Promise((resolve, reject) => {
+      const url = new URL(`${baseUrl}/auth/doLogin`);
+
+      const request = net.request({
+        method: 'POST',
+        url: url.toString(),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Referer': `${baseUrl}/auth/login`,
+        },
+      });
+
+      let responseData = '';
+
+      request.on('response', (response: any) => {
+        response.on('data', (chunk: any) => {
+          responseData += chunk;
+        });
+
+        response.on('end', () => {
+          // 从响应头获取 set-cookie
+          const setCookies = response.headers['set-cookie'];
+          console.log('response', response)
+          console.log('📋 响应头 set-cookie:', setCookies);
+
+          // 解析响应体
+          let responseBody = null;
+          try {
+            responseBody = JSON.parse(responseData);
+          } catch (e) {
+            console.log('响应体不是 JSON:', responseData);
+          }
+
+          resolve({
+            success: response.statusCode === 200,
+            statusCode: response.statusCode,
+            data: responseBody,
+            cookies: setCookies,
+          });
+        });
+      });
+
+      request.on('error', (error: any) => {
+        console.error('❌ 登录请求失败:', error);
+        reject(error);
+      });
+
+      // 发送表单数据
+      const formData = new URLSearchParams({
+        userName: username,
+        password: password,
+      });
+
+      request.write(formData.toString());
+      request.end();
+    });
+  });
 });
+
 
 app.on("window-all-closed", function () {
   if (process.platform !== "darwin") app.quit();

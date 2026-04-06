@@ -1,4 +1,4 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { ipcRenderer, contextBridge,IpcRenderer, } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
@@ -41,7 +41,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   offLogWatchError: () => {
     ipcRenderer.removeAllListeners('log-watch-error');
+  },
+  // 配置文件管理
+  getConfig: () => ipcRenderer.invoke('get-config'),
+  saveConfig: (config: any) => ipcRenderer.invoke('save-config', config),
+  resetConfig: () => ipcRenderer.invoke('reset-config'),
+  ipcRenderer: {
+    send: ipcRenderer.send,
+    on: ipcRenderer.on,
+    off: ipcRenderer.off,
+    invoke: ipcRenderer.invoke,
   }
 })
 
-
+declare global {
+  interface Window {
+    ipcRenderer: IpcRenderer;
+    // @ts-ignore
+    electronAPI: any;
+  }
+}

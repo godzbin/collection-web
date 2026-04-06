@@ -1,8 +1,8 @@
-import { ElMessage } from "element-plus";
-import { getToken } from "../utils/auth";
+import {ElMessage} from "element-plus";
+import {getToken} from "../utils/auth";
 // import { AxiosPromise } from "axios";
-import request from "../utils/request";
-import axios, {  AxiosRequestConfig } from "axios";
+import request from '../utils/request.ts'
+import axios, {AxiosRequestConfig} from "axios";
 
 export const get = <T, K>(url: string, query?: T): Promise<K> => {
   return request<K>({
@@ -96,3 +96,8 @@ export const downloadPromiseByExcel = <T>(config: AxiosRequestConfig<T>) => {
   };
   return downloadPromise(config);
 };
+
+
+
+
+
