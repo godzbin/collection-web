@@ -286,3 +286,8 @@ a {
 .mg-b {
   margin-bottom: 10px;
 }
+
+.el-card {
+  border-radius: 10px !important;
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.1) !important;
+}

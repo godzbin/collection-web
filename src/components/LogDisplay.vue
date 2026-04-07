@@ -10,17 +10,17 @@
           <option value="error">Error</option>
           <option value="debug">Debug</option>
         </select>
-        
-        <input 
-          v-model="searchTerm" 
-          type="text" 
-          placeholder="搜索日志..." 
-          class="search-input"
+
+        <input
+            v-model="searchTerm"
+            type="text"
+            placeholder="搜索日志..."
+            class="search-input"
         />
-        
+
         <button @click="clearLogs" class="btn-clear">清空</button>
       </div>
-      
+
       <div class="toolbar-right">
         <button @click="toggleAutoScroll" :class="['btn-auto-scroll', { active: autoScroll }]">
           {{ autoScroll ? '自动滚动' : '暂停滚动' }}
@@ -28,21 +28,37 @@
         <button @click="exportLogs" class="btn-export">导出</button>
       </div>
     </div>
-    
-    <!-- 日志内容区域 -->
+
+    <!-- 日志内容区域 - 虚拟滚动 -->
     <div ref="logContainer" class="log-container" @scroll="handleScroll">
-      <div 
-        v-for="(log, index) in filteredLogs" 
-        :key="index" 
-        :class="['log-entry', `log-${log.level.toLowerCase()}`]"
+      <div
+          v-if="filteredLogs.length === 0"
+          class="no-logs"
       >
-        <div class="log-time">{{ formatTime(log.timestamp) }}</div>
-        <div class="log-level">{{ log.level.toUpperCase() }}</div>
-        <div class="log-content" v-html="formatMessage(log.message)"></div>
-      </div>
-      
-      <div v-if="filteredLogs.length === 0" class="no-logs">
         暂无日志数据
+      </div>
+
+      <div
+          v-else
+          class="virtual-list"
+          :style="{ height: `${totalHeight}px` }"
+      >
+        <div
+            v-for="(log, index) in visibleLogs"
+            :key="visibleStartIndex + index"
+            class="log-entry-wrapper"
+            :style="{
+            position: 'absolute',
+            top: `${(visibleStartIndex + index) * itemHeight}px`,
+            height: `${itemHeight}px`
+          }"
+        >
+          <div :class="['log-entry', `log-${log.level.toLowerCase()}`]">
+            <div class="log-time">{{ formatTime(log.timestamp) }}</div>
+            <div class="log-level">{{ log.level.toUpperCase() }}</div>
+            <div class="log-content" v-html="formatMessage(log.message)"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -76,30 +92,59 @@ const autoScroll = ref(true)
 const isScrolledToBottom = ref(true)
 const logContainer = ref<HTMLDivElement>()
 
+// 虚拟滚动配置
+const itemHeight = 28 // 每行日志的固定高度(像素)
+const bufferSize = 10 // 上下缓冲区大小(额外渲染的行数)
+const scrollTop = ref(0)
+const containerHeight = ref(600) // 容器可视高度
+
 // 过滤后的日志
 const filteredLogs = computed(() => {
   return props.logs.filter(log => {
     // 级别过滤
     const levelMatch = levelFilter.value === 'all' || log.level === levelFilter.value
-    
+
     // 搜索过滤
-    const searchMatch = !searchTerm.value || 
-      log.message.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-      log.level.toLowerCase().includes(searchTerm.value.toLowerCase())
-    
+    const searchMatch = !searchTerm.value ||
+        log.message.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+        log.level.toLowerCase().includes(searchTerm.value.toLowerCase())
+
     return levelMatch && searchMatch
   })
 })
 
+// 虚拟滚动计算
+const totalHeight = computed(() => {
+  return filteredLogs.value.length * itemHeight
+})
+
+const visibleCount = computed(() => {
+  return Math.ceil(containerHeight.value / itemHeight)
+})
+
+const visibleStartIndex = computed(() => {
+  const index = Math.floor(scrollTop.value / itemHeight)
+  return Math.max(0, index - bufferSize)
+})
+
+const visibleEndIndex = computed(() => {
+  const index = visibleStartIndex.value + visibleCount.value + bufferSize * 2
+  return Math.min(filteredLogs.value.length, index)
+})
+
+const visibleLogs = computed(() => {
+  return filteredLogs.value.slice(visibleStartIndex.value, visibleEndIndex.value)
+})
+
 // 监听日志变化，自动滚动到底部
 watch(
-  () => filteredLogs.value.length,
-  async () => {
-    if (autoScroll.value && isScrolledToBottom.value) {
-      await nextTick()
-      scrollToBottom()
+    () => filteredLogs.value.length,
+    async () => {
+      if (autoScroll.value && isScrolledToBottom.value) {
+        await nextTick()
+        scrollToBottom()
+      }
     }
-  }
 )
 
 // 格式化时间
@@ -134,8 +179,10 @@ const scrollToBottom = () => {
 // 处理滚动事件
 const handleScroll = () => {
   if (logContainer.value) {
-    const { scrollTop, scrollHeight, clientHeight } = logContainer.value
-    isScrolledToBottom.value = Math.abs(scrollHeight - scrollTop - clientHeight) < 1
+    const { scrollTop: st, scrollHeight, clientHeight } = logContainer.value
+    scrollTop.value = st
+    containerHeight.value = clientHeight
+    isScrolledToBottom.value = Math.abs(scrollHeight - st - clientHeight) < 1
   }
 }
 
@@ -155,10 +202,10 @@ const clearLogs = () => {
 
 // 导出日志
 const exportLogs = () => {
-  const content = filteredLogs.value.map(log => 
-    `${formatTime(log.timestamp)} [${log.level.toUpperCase()}] ${log.message}`
+  const content = filteredLogs.value.map(log =>
+      `${formatTime(log.timestamp)} [${log.level.toUpperCase()}] ${log.message}`
   ).join('\n')
-  
+
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -241,19 +288,34 @@ const emit = defineEmits<{
 .log-container {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 0;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 13px;
   line-height: 1.5;
   background-color: #f9fafb;
   white-space: pre-wrap;
   word-break: break-word;
+  position: relative;
+}
+
+.virtual-list {
+  position: relative;
+  width: 100%;
+}
+
+.log-entry-wrapper {
+  left: 0;
+  right: 0;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .log-entry {
   display: flex;
   padding: 4px 0;
   border-bottom: 1px solid #f1f5f9;
+  height: 100%;
+  align-items: center;
 }
 
 .log-time {
@@ -287,6 +349,9 @@ const emit = defineEmits<{
 .log-content {
   flex: 1;
   color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .no-logs {

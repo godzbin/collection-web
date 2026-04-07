@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readLog: (filePath: string) => ipcRenderer.invoke('read-local-log', filePath),
   startLogWatch: (filePath: string) => ipcRenderer.invoke('start-log-watch', filePath),
   stopLogWatch: () => ipcRenderer.invoke('stop-log-watch'),
+  selectFile: (options?: any) => ipcRenderer.invoke('select-file', options),
   // 用于接收来自主进程的消息
   onLogFileChanged: (callback: (newData: string) => void) => {
     ipcRenderer.on('log-file-changed', (_, newData) => callback(newData));
@@ -44,7 +45,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   // 配置文件管理
   getConfig: () => ipcRenderer.invoke('get-config'),
-  saveConfig: (config: any) => ipcRenderer.invoke('save-config', config),
+  saveConfig: (config: { serviceUrl: string; xxlJobUrl: string; logFilePath: string }) => ipcRenderer.invoke('save-config', JSON.parse(JSON.stringify(config))),
   resetConfig: () => ipcRenderer.invoke('reset-config'),
   ipcRenderer: {
     send: ipcRenderer.send,

@@ -60,15 +60,21 @@
         <div class="step-content">
           <div class="setting-item">
             <label>Log 文件存储路径：</label>
-            <input
-                v-model="config.logFilePath"
-                type="text"
-                placeholder="例如: /var/logs/collection/app.log"
-                class="setting-input"
-            />
+            <div class="file-selector">
+              <input
+                  v-model="config.logFilePath"
+                  type="text"
+                  placeholder="请选择日志文件"
+                  class="setting-input file-input"
+                  readonly
+              />
+              <button @click="handleSelectFile" class="select-file-btn" :disabled="loading">
+                选择文件
+              </button>
+            </div>
             <div class="setting-hint">
               <p><strong>说明：</strong></p>
-              <p>请确保应用对该路径有读写权限。</p>
+              <p>点击"选择文件"按钮选择要监听的日志文件。</p>
               <p>当前配置：<strong>{{ config.logFilePath || '未设置' }}</strong></p>
             </div>
           </div>
@@ -131,6 +137,36 @@ const loadConfig = async () => {
   }
 }
 
+// 选择文件
+const handleSelectFile = async () => {
+  try {
+    if (!window.electronAPI) {
+      ElMessage.warning('非 Electron 环境，不支持文件选择')
+      return
+    }
+
+    const result = await window.electronAPI.selectFile({
+      title: '选择日志文件',
+      filters: [
+        { name: '日志文件', extensions: ['log', 'txt'] },
+        { name: '所有文件', extensions: ['*'] }
+      ]
+    })
+
+    if (result.success && result.filePath) {
+      config.value.logFilePath = result.filePath
+      ElMessage.success(`已选择: ${result.fileName}`)
+    } else if (result.canceled) {
+      console.log('用户取消了文件选择')
+    } else {
+      ElMessage.error(result.error || '选择文件失败')
+    }
+  } catch (error) {
+    console.error('选择文件时出错:', error)
+    ElMessage.error('选择文件失败')
+  }
+}
+
 // 保存配置
 const handleSave = async () => {
   // 验证必填项
@@ -148,8 +184,14 @@ const handleSave = async () => {
 
   try {
     if (window.electronAPI) {
-      // Electron 环境，保存到文件
-      const result = await window.electronAPI.saveConfig(config.value)
+      // Electron 环境，保存到文件 - 确保传递纯对象
+      const configToSave = {
+        serviceUrl: config.value.serviceUrl,
+        xxlJobUrl: config.value.xxlJobUrl,
+        logFilePath: config.value.logFilePath
+      }
+
+      const result = await window.electronAPI.saveConfig(configToSave)
       if (result.success) {
         ElMessage.success('配置已保存')
         // 保存后刷新页面使配置生效
@@ -211,7 +253,6 @@ onMounted(() => {
 .setting-page {
   min-height: 100vh;
   overflow: auto;
-  padding: 20px;
 }
 
 .setting-page h2 {
@@ -276,20 +317,50 @@ onMounted(() => {
   color: #1e293b;
 }
 
+.file-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .setting-input {
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-family: monospace;
   font-size: 0.9rem;
-  width: 100%;
-  max-width: 500px;
+  flex: 1;
+}
+
+.file-input {
+  cursor: pointer;
 }
 
 .setting-input:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.select-file-btn {
+  padding: 10px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.select-file-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.select-file-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .setting-hint {
@@ -366,8 +437,12 @@ onMounted(() => {
     padding: 16px;
   }
 
-  .setting-input {
-    max-width: 100%;
+  .file-selector {
+    flex-direction: column;
+  }
+
+  .select-file-btn {
+    width: 100%;
   }
 
   .save-section {

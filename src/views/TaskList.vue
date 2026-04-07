@@ -469,8 +469,8 @@ onUnmounted(() => {
 
 <style scoped>
 .task-page {
-  padding: 20px;
-  background-color: #f0f2f5;
+  //padding: 20px;
+  //background-color: #f0f2f5;
   min-height: 100vh;
 }
 

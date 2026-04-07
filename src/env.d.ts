@@ -23,12 +23,13 @@ interface Window {
         readLog: (filePath: string) => Promise<any>;
         startLogWatch: (filePath: string) => Promise<any>;
         stopLogWatch: () => Promise<any>;
+        selectFile: (options?: any) => Promise<{ success: boolean; filePath?: string; fileName?: string; canceled?: boolean; error?: string }>;
         onLogFileChanged: (callback: (newData: string) => void) => void;
         offLogFileChanged: () => void;
         onLogWatchError: (callback: (error: string) => void) => void;
         offLogWatchError: () => void;
         getConfig: () => Promise<{ success: boolean; data: any; message?: string }>;
-        saveConfig: (config: any) => Promise<{ success: boolean; message: string }>;
+        saveConfig: (config: { serviceUrl: string; xxlJobUrl: string; logFilePath: string }) => Promise<{ success: boolean; message: string }>;
         resetConfig: () => Promise<{ success: boolean; message: string; data: any }>;
     };
 }

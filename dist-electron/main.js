@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, net } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, net } from "electron";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
@@ -206,6 +206,34 @@ app.whenReady().then(() => {
       return { success: true, data: lines };
     } catch (error) {
       console.error("读取日志失败:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  ipcMain.handle("select-file", async (event, options) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (!window) {
+      return { success: false, error: "无法获取窗口实例" };
+    }
+    try {
+      const result = await dialog.showOpenDialog(window, {
+        title: "选择日志文件",
+        properties: ["openFile"],
+        filters: [
+          { name: "日志文件", extensions: ["log", "txt"] },
+          { name: "所有文件", extensions: ["*"] }
+        ],
+        ...options
+      });
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: false, canceled: true };
+      }
+      return {
+        success: true,
+        filePath: result.filePaths[0],
+        fileName: path.basename(result.filePaths[0])
+      };
+    } catch (error) {
+      console.error("文件选择失败:", error);
       return { success: false, error: error.message };
     }
   });
