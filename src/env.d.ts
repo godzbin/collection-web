@@ -31,5 +31,6 @@ interface Window {
         getConfig: () => Promise<{ success: boolean; data: any; message?: string }>;
         saveConfig: (config: { serviceUrl: string; xxlJobUrl: string; logFilePath: string }) => Promise<{ success: boolean; message: string }>;
         resetConfig: () => Promise<{ success: boolean; message: string; data: any }>;
+        invoke:(channel: string, ...args: any[]) => Promise<any>;
     };
 }
