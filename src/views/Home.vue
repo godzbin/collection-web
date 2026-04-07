@@ -2,7 +2,6 @@
   <div class="page">
 
     <div class="page-bg"></div>
-    <!-- 左侧：运行时长和图表 -->
     <div class="left-panel">
       <h2 class="mg-b" style="margin-bottom: 20px;">欢迎你，{{ userInfo.username }}</h2>
     </div>

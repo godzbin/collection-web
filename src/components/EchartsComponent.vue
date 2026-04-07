@@ -35,7 +35,7 @@ interface Props {
   data: number[];     // 成功率数据数组
   labels: string[];   // X轴标签
   width?: number;     // 图表宽度
-  height?: number;    // 图表高度
+  height?: number | string;    // 图表高度
   title?: string;     // 图表标题
   lineColor?: string; // 折线颜色
 }

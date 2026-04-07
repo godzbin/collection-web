@@ -5,15 +5,20 @@ import {
   RouteLocationNormalized,
   RouteRecordRaw
 } from "vue-router";
-import Home from "../views/Home.vue";
+// import Home from "../views/Home.vue";
 import {getToken} from "../utils/auth.ts"; // 我们将创建这个组件
 
 // @ts-ignore
 const routes: Array<RouteRecordRaw> = [
+  // {
+  //   path: "/",
+  //   name: "Home",
+  //   component: Home,
+  // },
   {
-    path: "/",
-    name: "Home",
-    component: Home,
+    path: '/',
+    name: 'Cockpit',
+    component: () => import("../views/Cockpit.vue"),
   },
   {
     path: "/taskList",
