@@ -1,4 +1,4 @@
-import { getToken, removeLocalInfo } from "./auth";
+import { getToken, removeLocalInfo, loadConfig } from "./auth";
 import router from "../router/index";
 import axios, {
   AxiosInstance,
@@ -10,15 +10,18 @@ import axios, {
 import { ElMessage } from "element-plus";
 
 // const baseUrl = import.meta.env.VITE_BASE_URL;
-const baseUrl = 'http://localhost:9980/'
-console.log(baseUrl, 'baseUrl', import.meta.env.DEV);
+// const baseUrl = 'http://localhost:9980/'
+// 获取配置文件中的地址
+// console.log(baseUrl, 'baseUrl', import.meta.env.DEV);
 const service: AxiosInstance = axios.create({
-  baseURL: import.meta.env.DEV  ? '/api' : baseUrl,
+  // baseURL: import.meta.env.DEV  ? '/api' : '',
   timeout: 60000,
 });
 
 service.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
+    const localConfig = await loadConfig()
+    config.url = (import.meta.env.DEV ? "/api" : localConfig?.serviceUrl ?? "") + config.url;
     const token = getToken();
     if (token) {
       // config.headers = {

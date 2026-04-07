@@ -1,66 +1,51 @@
-import { app, BrowserWindow, ipcMain, dialog, net } from "electron";
-import * as path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
-const __filename$1 = fileURLToPath(import.meta.url);
-const __dirname$1 = path.dirname(__filename$1);
-const CONFIG_FILE_PATH = path.join(app.getPath("userData"), "config.json");
-const DEFAULT_CONFIG = {
+import { app as p, BrowserWindow as g, ipcMain as l, dialog as z, net as W } from "electron";
+import * as i from "path";
+import { fileURLToPath as j } from "url";
+import r from "fs";
+const L = j(import.meta.url), v = i.dirname(L), w = i.join(p.getPath("userData"), "config.json"), y = {
   serviceUrl: "http://192.168.1.169:9980/",
   xxlJobUrl: "http://192.168.1.18:38080/xxl-job-admin",
   logFilePath: ""
 };
-function readConfig() {
+function N() {
   try {
-    if (fs.existsSync(CONFIG_FILE_PATH)) {
-      const data = fs.readFileSync(CONFIG_FILE_PATH, "utf-8");
-      return JSON.parse(data);
+    if (r.existsSync(w)) {
+      const t = r.readFileSync(w, "utf-8");
+      return JSON.parse(t);
     }
-  } catch (error) {
-    console.error("读取配置文件失败:", error);
+  } catch (t) {
+    console.error("读取配置文件失败:", t);
   }
-  return DEFAULT_CONFIG;
+  return y;
 }
-function saveConfig(config) {
+function P(t) {
   try {
-    const configData = {
-      serviceUrl: config.serviceUrl || DEFAULT_CONFIG.serviceUrl,
-      xxlJobUrl: config.xxlJobUrl || DEFAULT_CONFIG.xxlJobUrl,
-      logFilePath: config.logFilePath || ""
-    };
-    const configDir = path.dirname(CONFIG_FILE_PATH);
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
-    }
-    fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify(configData, null, 2), "utf-8");
-    console.log("✅ 配置文件已保存:", CONFIG_FILE_PATH);
-    return true;
-  } catch (error) {
-    console.error("保存配置文件失败:", error);
-    return false;
+    const e = {
+      serviceUrl: t.serviceUrl || y.serviceUrl,
+      xxlJobUrl: t.xxlJobUrl || y.xxlJobUrl,
+      logFilePath: t.logFilePath || ""
+    }, n = i.dirname(w);
+    return r.existsSync(n) || r.mkdirSync(n, { recursive: !0 }), r.writeFileSync(w, JSON.stringify(e, null, 2), "utf-8"), console.log("✅ 配置文件已保存:", w), !0;
+  } catch (e) {
+    return console.error("保存配置文件失败:", e), !1;
   }
 }
-let pollTimer = null;
-let lastFileSize = 0;
-let currentWatchPath = "";
-function createWindow() {
-  const preloadPath = path.join(__dirname$1, "preload.cjs");
-  console.log("💡 Preload 绝对路径:", preloadPath);
-  if (!fs.existsSync(preloadPath)) {
-    console.error("❌ 错误：preload.cjs 文件不存在！请检查构建过程。");
-  }
-  const mainWindow = new BrowserWindow({
+let d = null, c = 0, f = "";
+function C() {
+  const t = i.join(v, "preload.cjs");
+  console.log("💡 Preload 绝对路径:", t), r.existsSync(t) || console.error("❌ 错误：preload.cjs 文件不存在！请检查构建过程。");
+  const e = new g({
     width: 1200,
     height: 800,
     webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      preload: preloadPath,
-      devTools: process.env.NODE_ENV === "development"
+      contextIsolation: !0,
+      nodeIntegration: !1,
+      preload: t,
+      devTools: !0
     },
-    frame: true,
-    resizable: true,
-    icon: path.join(__dirname$1, "../public/logo_b_s.png"),
+    frame: !0,
+    resizable: !0,
+    icon: i.join(v, "../public/logo_b_s.png"),
     backgroundColor: "#f8fafc",
     ...process.platform === "darwin" ? {
       titleBarStyle: "hidden",
@@ -69,225 +54,147 @@ function createWindow() {
       visualEffectState: "active"
     } : {}
   });
-  if (process.env.NODE_ENV === "development") {
-    mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname$1, "../dist/index.html"));
-  }
-  return mainWindow;
+  return process.env.NODE_ENV === "development" ? (e.loadURL("http://localhost:5173"), e.webContents.openDevTools()) : e.loadFile(i.join(v, "../dist/index.html")), e.webContents.openDevTools(), e;
 }
-app.whenReady().then(() => {
-  const mainWindow = createWindow();
-  app.on("activate", function() {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-  ipcMain.handle("get-config", async () => {
-    console.log("📖 读取配置文件");
-    const config = readConfig();
-    return { success: true, data: config };
-  });
-  ipcMain.handle("save-config", async (event, config) => {
-    console.log("💾 保存配置文件:", event, config);
-    const success = saveConfig(config);
-    return { success, message: success ? "保存成功" : "保存失败" };
-  });
-  ipcMain.handle("reset-config", async () => {
+p.whenReady().then(() => {
+  const t = C();
+  p.on("activate", function() {
+    g.getAllWindows().length === 0 && C();
+  }), l.handle("get-config", async () => (console.log("📖 读取配置文件"), { success: !0, data: N() })), l.handle("save-config", async (e, n) => {
+    console.log("💾 保存配置文件:", e, n);
+    const o = P(n);
+    return { success: o, message: o ? "保存成功" : "保存失败" };
+  }), l.handle("reset-config", async () => {
     console.log("🔄 重置配置文件");
-    const success = saveConfig(DEFAULT_CONFIG);
+    const e = P(y);
     return {
-      success,
-      message: success ? "重置成功" : "重置失败",
-      data: DEFAULT_CONFIG
+      success: e,
+      message: e ? "重置成功" : "重置失败",
+      data: y
     };
-  });
-  ipcMain.handle("start-log-watch", async (event, logPath) => {
-    console.log(event);
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-    }
-    currentWatchPath = logPath;
-    console.log(`🔄 启动轮询监听: ${logPath}`);
+  }), l.handle("start-log-watch", async (e, n) => {
+    console.log(e), d && (clearInterval(d), d = null), f = n, console.log(`🔄 启动轮询监听: ${n}`);
     try {
-      if (fs.existsSync(logPath)) {
-        lastFileSize = fs.statSync(logPath).size;
-        console.log(`📏 初始文件大小: ${lastFileSize} bytes`);
-      } else {
-        lastFileSize = 0;
-        console.log("⚠️ 文件不存在，将从 0 开始监听");
-      }
-    } catch (err) {
-      console.error(`获取初始文件状态失败:`, err);
-      lastFileSize = 0;
+      r.existsSync(n) ? (c = r.statSync(n).size, console.log(`📏 初始文件大小: ${c} bytes`)) : (c = 0, console.log("⚠️ 文件不存在，将从 0 开始监听"));
+    } catch (o) {
+      console.error("获取初始文件状态失败:", o), c = 0;
     }
-    pollTimer = setInterval(() => {
-      if (!currentWatchPath || !mainWindow || mainWindow.isDestroyed()) {
-        return;
-      }
-      try {
-        if (!fs.existsSync(currentWatchPath)) {
-          if (lastFileSize !== 0) {
-            console.log("⚠️ 文件暂时消失，重置指针");
-            lastFileSize = 0;
+    return d = setInterval(() => {
+      if (!(!f || !t || t.isDestroyed()))
+        try {
+          if (!r.existsSync(f)) {
+            c !== 0 && (console.log("⚠️ 文件暂时消失，重置指针"), c = 0);
+            return;
           }
-          return;
+          const s = r.statSync(f).size;
+          if (s < c) {
+            console.log("📉 文件被重置或清空"), c = s;
+            return;
+          }
+          if (s > c) {
+            const u = r.createReadStream(f, {
+              encoding: "utf-8",
+              start: c,
+              end: s
+            });
+            let m = "";
+            u.on("data", (h) => {
+              m += h;
+            }), u.on("end", () => {
+              c = s, m.trim() && t.webContents.send("log-file-changed", m);
+            }), u.on("error", (h) => {
+              console.error("读取文件流错误:", h);
+            });
+          }
+        } catch (o) {
+          console.error("轮询检查文件出错:", o), t && !t.isDestroyed() && t.webContents.send("log-watch-error", o.message);
         }
-        const stats = fs.statSync(currentWatchPath);
-        const currentSize = stats.size;
-        if (currentSize < lastFileSize) {
-          console.log("📉 文件被重置或清空");
-          lastFileSize = currentSize;
-          return;
-        }
-        if (currentSize > lastFileSize) {
-          const stream = fs.createReadStream(currentWatchPath, {
-            encoding: "utf-8",
-            start: lastFileSize,
-            end: currentSize
-          });
-          let newData = "";
-          stream.on("data", (chunk) => {
-            newData += chunk;
-          });
-          stream.on("end", () => {
-            lastFileSize = currentSize;
-            if (newData.trim()) {
-              mainWindow.webContents.send("log-file-changed", newData);
-            }
-          });
-          stream.on("error", (err) => {
-            console.error("读取文件流错误:", err);
-          });
-        }
-      } catch (error) {
-        console.error("轮询检查文件出错:", error);
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send("log-watch-error", error.message);
-        }
-      }
-    }, 500);
-    return { success: true, message: "轮询监听已启动" };
-  });
-  ipcMain.handle("stop-log-watch", async () => {
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-      currentWatchPath = "";
-      console.log("⏹️ 轮询监听已停止");
-      return { success: true, message: "已停止监听" };
-    }
-    return { success: true, message: "未在监听" };
-  });
-  ipcMain.handle("window-minimize", () => {
-    const window = BrowserWindow.getFocusedWindow();
-    if (window) window.minimize();
-  });
-  ipcMain.handle("window-maximize", () => {
-    const window = BrowserWindow.getFocusedWindow();
-    if (window) {
-      if (window.isMaximized()) window.unmaximize();
-      else window.maximize();
-    }
-  });
-  ipcMain.handle("window-close", () => {
-    const window = BrowserWindow.getFocusedWindow();
-    if (window) window.close();
-  });
-  ipcMain.handle("read-local-log", async (event, filePath) => {
-    console.log(event);
+    }, 500), { success: !0, message: "轮询监听已启动" };
+  }), l.handle("stop-log-watch", async () => d ? (clearInterval(d), d = null, f = "", console.log("⏹️ 轮询监听已停止"), { success: !0, message: "已停止监听" }) : { success: !0, message: "未在监听" }), l.handle("window-minimize", () => {
+    const e = g.getFocusedWindow();
+    e && e.minimize();
+  }), l.handle("window-maximize", () => {
+    const e = g.getFocusedWindow();
+    e && (e.isMaximized() ? e.unmaximize() : e.maximize());
+  }), l.handle("window-close", () => {
+    const e = g.getFocusedWindow();
+    e && e.close();
+  }), l.handle("read-local-log", async (e, n) => {
+    console.log(e);
     try {
-      const safePath = path.resolve(filePath);
-      if (!fs.existsSync(safePath)) {
+      const o = i.resolve(n);
+      if (!r.existsSync(o))
         throw new Error("文件不存在");
-      }
-      const content = fs.readFileSync(safePath, "utf-8");
-      const lines = content.split(/\r?\n/);
-      return { success: true, data: lines };
-    } catch (error) {
-      console.error("读取日志失败:", error);
-      return { success: false, error: error.message };
+      return { success: !0, data: r.readFileSync(o, "utf-8").split(/\r?\n/) };
+    } catch (o) {
+      return console.error("读取日志失败:", o), { success: !1, error: o.message };
     }
-  });
-  ipcMain.handle("select-file", async (event, options) => {
-    const window = BrowserWindow.fromWebContents(event.sender);
-    if (!window) {
-      return { success: false, error: "无法获取窗口实例" };
-    }
+  }), l.handle("select-file", async (e, n) => {
+    const o = g.fromWebContents(e.sender);
+    if (!o)
+      return { success: !1, error: "无法获取窗口实例" };
     try {
-      const result = await dialog.showOpenDialog(window, {
+      const s = await z.showOpenDialog(o, {
         title: "选择日志文件",
         properties: ["openFile"],
         filters: [
           { name: "日志文件", extensions: ["log", "txt"] },
           { name: "所有文件", extensions: ["*"] }
         ],
-        ...options
+        ...n
       });
-      if (result.canceled || result.filePaths.length === 0) {
-        return { success: false, canceled: true };
-      }
-      return {
-        success: true,
-        filePath: result.filePaths[0],
-        fileName: path.basename(result.filePaths[0])
+      return s.canceled || s.filePaths.length === 0 ? { success: !1, canceled: !0 } : {
+        success: !0,
+        filePath: s.filePaths[0],
+        fileName: i.basename(s.filePaths[0])
       };
-    } catch (error) {
-      console.error("文件选择失败:", error);
-      return { success: false, error: error.message };
+    } catch (s) {
+      return console.error("文件选择失败:", s), { success: !1, error: s.message };
     }
-  });
-  ipcMain.handle("xxl-job-login", async (event, payload) => {
-    console.log("xxl-job", event);
-    const { baseUrl, username, password } = payload;
-    console.log("🔐 收到 XXL-Job 登录请求:", baseUrl);
-    return new Promise((resolve, reject) => {
-      const url = new URL(`${baseUrl}/auth/doLogin`);
-      const request = net.request({
+  }), l.handle("xxl-job-login", async (e, n) => {
+    console.log("xxl-job", e);
+    const { baseUrl: o, username: s, password: u } = n;
+    return console.log("🔐 收到 XXL-Job 登录请求:", o), new Promise((m, h) => {
+      const U = new URL(`${o}/auth/doLogin`), x = W.request({
         method: "POST",
-        url: url.toString(),
+        url: U.toString(),
         headers: {
           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           "X-Requested-With": "XMLHttpRequest",
-          "Referer": `${baseUrl}/auth/login`
+          Referer: `${o}/auth/login`
         }
       });
-      let responseData = "";
-      request.on("response", (response) => {
-        response.on("data", (chunk) => {
-          responseData += chunk;
-        });
-        response.on("end", () => {
-          const setCookies = response.headers["set-cookie"];
-          console.log("response", response);
-          console.log("📋 响应头 set-cookie:", setCookies);
-          let responseBody = null;
+      let b = "";
+      x.on("response", (a) => {
+        a.on("data", (S) => {
+          b += S;
+        }), a.on("end", () => {
+          const S = a.headers["set-cookie"];
+          console.log("response", a), console.log("📋 响应头 set-cookie:", S);
+          let F = null;
           try {
-            responseBody = JSON.parse(responseData);
-          } catch (e) {
-            console.log("响应体不是 JSON:", responseData);
+            F = JSON.parse(b);
+          } catch {
+            console.log("响应体不是 JSON:", b);
           }
-          resolve({
-            success: response.statusCode === 200,
-            statusCode: response.statusCode,
-            data: responseBody,
-            cookies: setCookies
+          m({
+            success: a.statusCode === 200,
+            statusCode: a.statusCode,
+            data: F,
+            cookies: S
           });
         });
+      }), x.on("error", (a) => {
+        console.error("❌ 登录请求失败:", a), h(a);
       });
-      request.on("error", (error) => {
-        console.error("❌ 登录请求失败:", error);
-        reject(error);
+      const D = new URLSearchParams({
+        userName: s,
+        password: u
       });
-      const formData = new URLSearchParams({
-        userName: username,
-        password
-      });
-      request.write(formData.toString());
-      request.end();
+      x.write(D.toString()), x.end();
     });
   });
 });
-app.on("window-all-closed", function() {
-  if (process.platform !== "darwin") app.quit();
+p.on("window-all-closed", function() {
+  process.platform !== "darwin" && p.quit();
 });

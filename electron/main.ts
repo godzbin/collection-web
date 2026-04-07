@@ -74,7 +74,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       preload: preloadPath,
-      devTools: process.env.NODE_ENV === "development",
+      devTools: true || process.env.NODE_ENV === "development",
     },
     frame: true,
     resizable: true,
@@ -96,6 +96,7 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
+  mainWindow.webContents.openDevTools();
 
   return mainWindow;
 }
