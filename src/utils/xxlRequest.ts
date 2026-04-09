@@ -7,9 +7,9 @@ import axios, {
 import { ElMessage } from "element-plus";
 
 // XXL-Job 配置
-export const xxlBaseUrl = !import.meta.env.DEV
-    ? 'http://192.168.1.18:38080/xxl-job-admin'
-    : '/xxl-job-admin';
+// export const xxlBaseUrl = !import.meta.env.DEV
+//     ? 'http://192.168.1.18:38080/xxl-job-admin'
+//     : '/xxl-job-admin';
 
 export const xxlUsername = 'admin'; // XXL-Job 默认用户名
 export const xxlPassword = 'guorui@2026'; // XXL-Job 默认密码
@@ -26,7 +26,7 @@ export function getXxlToken(): string | null {
 
 // 创建 XXL-Job 专用的 axios 实例（不添加主系统的 token）
 const xxlService: AxiosInstance = axios.create({
-    baseURL: xxlBaseUrl,
+    // baseURL: xxlBaseUrl,
     timeout: 60000,
     withCredentials: true, // 允许携带 cookie
 });

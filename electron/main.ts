@@ -13,8 +13,8 @@ const CONFIG_FILE_PATH = path.join(app.getPath('userData'), 'config.json');
 
 // 默认配置
 const DEFAULT_CONFIG = {
-  serviceUrl: 'http://192.168.1.169:9980/',
-  xxlJobUrl: 'http://192.168.1.18:38080/xxl-job-admin',
+  serviceUrl: 'http://192.168.1.100:9980',
+  xxlJobUrl: 'http://192.168.1.100:38080/xxl-job-admin',
   logFilePath: ''
 };
 

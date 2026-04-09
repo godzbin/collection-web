@@ -80,7 +80,7 @@ import {DayLoadRes, getDayLoadDataList} from "../api/dataManagement.ts";
 const list = ref<DayLoadRes[]>([])
 const loading = ref(false)
 const query = reactive({
-  date: new Date().getTime(),
+  date: $dayjs().subtract(4, 'day').valueOf(),
   status: 'all',
 })
 

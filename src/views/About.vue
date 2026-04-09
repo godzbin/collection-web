@@ -40,14 +40,6 @@
         </div>
       </div> -->
       
-      <div class="contact-section">
-        <h3>联系我们</h3>
-        <p>如有任何问题或建议，请随时与我们联系：</p>
-        <div class="contact-info">
-          <!-- <p>邮箱: support@0xa-collection.com</p> -->
-          <p>GitHub: github.com/0xa-collection</p>
-        </div>
-      </div>
     </div>
     
     <div class="footer">

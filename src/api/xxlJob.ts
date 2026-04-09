@@ -1,7 +1,7 @@
 // import axios from "axios";
 import { loadConfig } from "../utils/auth";
 import request from "../utils/xxlRequest";
-import {xxlPassword, xxlUsername} from "../utils/xxlRequest";
+// import {xxlPassword, xxlUsername} from "../utils/xxlRequest";
 
 
 /**
@@ -11,6 +11,8 @@ import {xxlPassword, xxlUsername} from "../utils/xxlRequest";
 export async function xxlLogin(): Promise<any> {
     const config = await loadConfig()
     const xxlBaseUrl = config?.xxlJobUrl ?? "";
+    const xxlUsername = config?.xxlJobUsername ?? "";
+    const xxlPassword = config?.xxlJobPassword ?? "";
     try {
       // 1. 优先使用 Electron IPC 方式
       if (window.electronAPI && window.electronAPI.invoke) {

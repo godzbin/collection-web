@@ -315,21 +315,21 @@ onUnmounted(() => {
   <div class="task-page">
     <div class="page-header">
       <h2 class="page-title">任务管理</h2>
-      <div class="login-status">
-        <el-tag :type="xxlLoggedIn ? 'success' : 'danger'">
-          {{ xxlLoggedIn ? 'XXL-Job 已登录' : 'XXL-Job 未登录' }}
-        </el-tag>
-        <el-button
-            v-if="!xxlLoggedIn"
-            type="primary"
-            size="small"
-            @click="handleXxlLogin"
-            :loading="loading"
-            style="margin-left: 10px"
-        >
-          登录 XXL-Job
-        </el-button>
-      </div>
+<!--      <div class="login-status">-->
+<!--        <el-tag :type="xxlLoggedIn ? 'success' : 'danger'">-->
+<!--          {{ xxlLoggedIn ? 'XXL-Job 已登录' : 'XXL-Job 未登录' }}-->
+<!--        </el-tag>-->
+<!--        <el-button-->
+<!--            v-if="!xxlLoggedIn"-->
+<!--            type="primary"-->
+<!--            size="small"-->
+<!--            @click="handleXxlLogin"-->
+<!--            :loading="loading"-->
+<!--            style="margin-left: 10px"-->
+<!--        >-->
+<!--          登录 XXL-Job-->
+<!--        </el-button>-->
+<!--      </div>-->
     </div>
 
     <!-- 搜索栏 -->

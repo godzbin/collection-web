@@ -15,7 +15,7 @@
             <input
                 v-model="config.serviceUrl"
                 type="text"
-                placeholder="例如: http://192.168.1.169:9980/"
+                placeholder="例如: http://192.168.1.100:9980"
                 class="setting-input"
             />
             <div class="setting-hint">
@@ -39,13 +39,33 @@
             <input
                 v-model="config.xxlJobUrl"
                 type="text"
-                placeholder="例如: http://192.168.1.18:38080/xxl-job-admin"
+                placeholder="例如: http://192.168.1.1000:38080/xxl-job-admin"
+                class="setting-input"
+            />
+
+          </div>
+          <div class="setting-item" style="margin-top: 12px;">
+            <label>XXL-Job 用户名：</label>
+            <input
+                v-model="config.xxlUsername"
+                type="text"
+                placeholder="例如: admin"
+                class="setting-input"
+            />
+          </div>
+          <div class="setting-item" style="margin-top: 12px;">
+            <label>XXL-Job 密码：</label>
+            <input
+                v-model="config.xxlPassword"
+                type="password"
+                placeholder="请输入密码"
                 class="setting-input"
             />
             <div class="setting-hint">
               <p><strong>说明：</strong></p>
               <p>配置 XXL-Job 调度中心的完整地址。</p>
               <p>当前配置：<strong>{{ config.xxlJobUrl || '未设置' }}</strong></p>
+              <p>配置 XXL-Job 管理后台的登录账号和密码。</p>
             </div>
           </div>
         </div>
@@ -54,7 +74,7 @@
       <!-- 第三步：Log 文件地址配置 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">3</div>
+          <div class="step-number">4</div>
           <div class="step-title">Log 文件地址配置</div>
         </div>
         <div class="step-content">
@@ -98,20 +118,26 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
+
 interface ConfigType {
   serviceUrl: string
   xxlJobUrl: string
   logFilePath: string
+  xxlUsername: string // 新增
+  xxlPassword: string // 新增
 }
 
 // 配置数据
 const config = ref<ConfigType>({
   serviceUrl: '',
   xxlJobUrl: '',
-  logFilePath: ''
+  logFilePath: '',
+  xxlUsername: 'admin', // 默认值
+  xxlPassword: ''       // 默认值，建议留空或从安全存储读取
 })
 
 const loading = ref(false)
+
 
 // 加载配置
 const loadConfig = async () => {
@@ -119,7 +145,11 @@ const loadConfig = async () => {
     if (window.electronAPI) {
       const result = await window.electronAPI.getConfig()
       if (result.success) {
-        config.value = result.data
+        // 合并默认值，防止旧配置缺少新字段
+        config.value = {
+          ...config.value,
+          ...result.data
+        }
         console.log('✅ 配置加载成功:', config.value)
       } else {
         console.error('❌ 配置加载失败')
@@ -128,7 +158,11 @@ const loadConfig = async () => {
       // 非 Electron 环境，使用 localStorage
       const saved = localStorage.getItem('systemConfig')
       if (saved) {
-        config.value = JSON.parse(saved)
+        const parsed = JSON.parse(saved)
+        config.value = {
+          ...config.value,
+          ...parsed
+        }
       }
     }
   } catch (error) {
@@ -180,15 +214,22 @@ const handleSave = async () => {
     return
   }
 
+  if (!config.value.xxlUsername.trim()) {
+    ElMessage.warning('请输入 XXL-Job 用户名')
+    return
+  }
+
   loading.value = true
 
   try {
     if (window.electronAPI) {
-      // Electron 环境，保存到文件 - 确保传递纯对象
+      // Electron 环境，保存到文件
       const configToSave = {
         serviceUrl: config.value.serviceUrl,
         xxlJobUrl: config.value.xxlJobUrl,
-        logFilePath: config.value.logFilePath
+        logFilePath: config.value.logFilePath,
+        xxlUsername: config.value.xxlUsername,
+        xxlPassword: config.value.xxlPassword
       }
 
       const result = await window.electronAPI.saveConfig(configToSave)
@@ -217,13 +258,17 @@ const handleSave = async () => {
   }
 }
 
+
 // 重置配置
 const handleReset = async () => {
   try {
     if (window.electronAPI) {
       const result = await window.electronAPI.resetConfig()
       if (result.success) {
-        config.value = result.data
+        config.value = {
+          ...config.value,
+          ...result.data
+        }
         ElMessage.success('已重置为默认配置')
       } else {
         ElMessage.error(result.message || '重置失败')
@@ -233,7 +278,9 @@ const handleReset = async () => {
       config.value = {
         serviceUrl: 'http://192.168.1.169:9980/',
         xxlJobUrl: 'http://192.168.1.18:38080/xxl-job-admin',
-        logFilePath: ''
+        logFilePath: '',
+        xxlUsername: 'admin',
+        xxlPassword: 'guorui@2026' // 重置为默认密码
       }
       ElMessage.success('已重置为默认配置')
     }
@@ -242,6 +289,7 @@ const handleReset = async () => {
     ElMessage.error('重置配置失败')
   }
 }
+
 
 // 组件挂载时加载配置
 onMounted(() => {
