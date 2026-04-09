@@ -3,6 +3,21 @@
     <div class="header">
       <h1>数据驾驶舱</h1>
       <div class="date-selector">
+        <!-- 新增：负荷类型选择器 -->
+        <el-select
+            v-model="selectedLoadType"
+            placeholder="请选择负荷类型"
+            style="width: 160px; margin-right: 12px;"
+            @change="handleLoadTypeChange"
+        >
+          <el-option
+              v-for="item in loadTypes"
+              :key="item.value"
+              :label="item.name"
+              :value="item.value"
+          />
+        </el-select>
+
         <el-date-picker
             v-model="selectedDate"
             type="date"
@@ -18,30 +33,30 @@
     </div>
 
     <div class="charts-grid">
-        <EchartsLine
-            :option="dayAheadPriceOption"
-            title="日前价格"
-            height="350px"
-            color="#0098d9"
-        />
-        <EchartsLine
-            :option="realTimePriceOption"
-            title="实时价格"
-            height="350px"
-            color="#e6b600"
-        />
-        <EchartsLine
-            :option="actualLoadOption"
-            title="实际负荷"
-            height="350px"
-            color="#339ca8"
-        />
-        <EchartsLine
-            :option="forecastLoadOption"
-            title="预测负荷"
-            height="350px"
-            color="#c12e34"
-        />
+      <EchartsLine
+          :option="dayAheadPriceOption"
+          title="日前价格"
+          height="350px"
+          color="#0098d9"
+      />
+      <EchartsLine
+          :option="realTimePriceOption"
+          title="实时价格"
+          height="350px"
+          color="#e6b600"
+      />
+      <EchartsLine
+          :option="actualLoadOption"
+          title="实际负荷"
+          height="350px"
+          color="#339ca8"
+      />
+      <EchartsLine
+          :option="forecastLoadOption"
+          title="预测负荷"
+          height="350px"
+          color="#c12e34"
+      />
     </div>
   </div>
 </template>
@@ -58,6 +73,20 @@ import {
   PubLoadReality,
   PubLoadPrediction
 } from '../api/dataApi';
+
+// --- 新增：定义负荷类型 (参考 spot-admin-web 中的 loadType) ---
+
+const loadTypes = [
+  { name: "统调", value: "统调负荷" },
+  { name: "西电", value: "西电东送电力" },
+  { name: "B类", value: "省内B类电源" },
+  { name: "A类", value: "省内A类电源" },
+  { name: "地方电", value: "地方电源出力" },
+  { name: "粤港联络线", value: "粤港联络线" }
+];
+
+const selectedLoadType = ref<string>("统调负荷"); // 默认选中统调
+// ---------------------------------------------------------
 
 const selectedDate = ref<string>(dayjs().format('YYYY-MM-DD'));
 const loading = ref(false);
@@ -79,6 +108,11 @@ const forecastLoadOption = ref<any>({});
 
 // 处理日期变化
 const handleDateChange = () => {
+  loadAllData();
+};
+
+// 新增：处理负荷类型变化
+const handleLoadTypeChange = () => {
   loadAllData();
 };
 
@@ -194,14 +228,14 @@ const createLoadOption = (data: number[], title: string) => {
   };
 };
 
-// 从price对象中提取24个整点数据
-const extract24HourData = (priceObj: any): number[] => {
-  if (!priceObj) return [];
+// 从price/load对象中提取24个整点数据
+const extract24HourData = (dataObj: any): number[] => {
+  if (!dataObj) return [];
 
   const result: number[] = [];
   for (let i = 0; i < 24; i++) {
     const timeKey = `${String(i).padStart(2, '0')}:00`;
-    const value = priceObj[timeKey];
+    const value = dataObj[timeKey];
     result.push(value !== undefined ? Number(value) : 0);
   }
   return result;
@@ -220,8 +254,8 @@ const loadAllData = async () => {
     await Promise.all([
       loadDayAheadPrice(selectedDate.value),
       loadRealTimePrice(selectedDate.value),
-      loadActualLoad(selectedDate.value),
-      loadForecastLoad(selectedDate.value)
+      loadActualLoad(selectedDate.value, selectedLoadType.value), // 传入选中的类型
+      loadForecastLoad(selectedDate.value, selectedLoadType.value) // 传入选中的类型
     ]);
   } catch (error) {
     console.error('加载数据失败:', error);
@@ -241,10 +275,8 @@ const loadDayAheadPrice = async (date: string) => {
     };
 
     const res = await getPubNodeAvgPrice(params);
-    console.log(res)
     if (res && res.length > 0 && res[0].price) {
       const priceValues = extract24HourData(res[0].price);
-      console.log(res[0], priceValues)
       dayAheadPriceData.value = priceValues;
       dayAheadPriceOption.value = createPriceOption(priceValues, '日前价格');
     } else {
@@ -284,12 +316,12 @@ const loadRealTimePrice = async (date: string) => {
   }
 };
 
-// 加载实际负荷
-const loadActualLoad = async (date: string) => {
+// 修改：加载实际负荷，增加 name 参数
+const loadActualLoad = async (date: string, loadName: string) => {
   try {
     const params: PubLoadReality = {
       day: date,
-      name: '实际负荷',
+      name: loadName, // 使用动态传入的 name
       page: 1,
       pageSize: 1
     };
@@ -298,7 +330,8 @@ const loadActualLoad = async (date: string) => {
     if (res && res.length > 0 && res[0].load) {
       const loadValues = extract24HourData(res[0].load);
       actualLoadData.value = loadValues;
-      actualLoadOption.value = createLoadOption(loadValues, '实际负荷');
+      // 标题也可以动态化，例如：`${loadTypes.find(t=>t.value===loadName)?.name || ''}实际负荷`
+      actualLoadOption.value = createLoadOption(loadValues, `${getLoadDisplayName(loadName)}实际负荷`);
     } else {
       actualLoadData.value = [];
       actualLoadOption.value = {};
@@ -310,12 +343,12 @@ const loadActualLoad = async (date: string) => {
   }
 };
 
-// 加载预测负荷
-const loadForecastLoad = async (date: string) => {
+// 修改：加载预测负荷，增加 name 参数
+const loadForecastLoad = async (date: string, loadName: string) => {
   try {
     const params: PubLoadPrediction = {
       day: date,
-      name: '预测负荷',
+      name: loadName, // 使用动态传入的 name
       page: 1,
       pageSize: 1
     };
@@ -324,7 +357,7 @@ const loadForecastLoad = async (date: string) => {
     if (res && res.length > 0 && res[0].load) {
       const loadValues = extract24HourData(res[0].load);
       forecastLoadData.value = loadValues;
-      forecastLoadOption.value = createLoadOption(loadValues, '预测负荷');
+      forecastLoadOption.value = createLoadOption(loadValues, `${getLoadDisplayName(loadName)}预测负荷`);
     } else {
       forecastLoadData.value = [];
       forecastLoadOption.value = {};
@@ -334,6 +367,12 @@ const loadForecastLoad = async (date: string) => {
     forecastLoadData.value = [];
     forecastLoadOption.value = {};
   }
+};
+
+// 辅助函数：根据 value 获取显示名称
+const getLoadDisplayName = (value: string) => {
+  const type = loadTypes.find(t => t.value === value);
+  return type ? type.name : '';
 };
 
 onMounted(() => {
@@ -385,5 +424,4 @@ onMounted(() => {
   font-weight: bold;
   font-size: 16px;
 }
-
 </style>

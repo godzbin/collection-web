@@ -11,8 +11,9 @@ import request from "../utils/xxlRequest";
 export async function xxlLogin(): Promise<any> {
     const config = await loadConfig()
     const xxlBaseUrl = config?.xxlJobUrl ?? "";
-    const xxlUsername = config?.xxlJobUsername ?? "";
-    const xxlPassword = config?.xxlJobPassword ?? "";
+    const xxlUsername = config?.xxlUsername ?? "";
+    const xxlPassword = config?.xxlPassword ?? "";
+    console.log(`[XXL-Job] 登录: ${xxlBaseUrl}`, xxlUsername, xxlPassword);
     try {
       // 1. 优先使用 Electron IPC 方式
       if (window.electronAPI && window.electronAPI.invoke) {
@@ -56,7 +57,7 @@ export const postByXXL = async <K>(url: string, data: object, retryCount = 0): P
     // 1. 优先使用 Electron 代理
     if (window.electronAPI && window.electronAPI.invoke) {
         try {
-            console.log(`[XXL-Job Proxy] 请求: ${url}`);
+            console.log(`[XXL-Job Proxy] 请求: ${url} `, data);
             
             // 调用主进程代理
             const result = await window.electronAPI.invoke("xxl-job-proxy", {
@@ -69,7 +70,12 @@ export const postByXXL = async <K>(url: string, data: object, retryCount = 0): P
             // 假设 XXL-Job 成功 code 为 200，失败可能为 500 或其他，未登录通常为 203 或 401
             if (result.status === 200) {
                 // 检查业务内部 code
-                if (result.data.code !== 203) {
+                if (
+                    result.data.code === 500
+                ) {
+                    // 业务逻辑错误
+                    throw { response: { data: result.msg }, message: result.data.msg };
+                } else if  (result.data.code !== 203) {
                   return result.data as K;
                 } else {
                   // 业务逻辑错误
@@ -93,7 +99,7 @@ export const postByXXL = async <K>(url: string, data: object, retryCount = 0): P
                 error.response?.data?.msg?.includes("not login") ||
                 error.message?.includes("not login");
 
-            if (isAuthError && retryCount < 2) {
+            if (isAuthError && retryCount < 10) {
                 console.log(`[XXL-Job] 认证失效，尝试重新登录... (重试: ${retryCount + 1})`);
                 try {
                     await xxlLogin();

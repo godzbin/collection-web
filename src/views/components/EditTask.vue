@@ -65,25 +65,31 @@
         </el-col>
 
         <el-col :span="12">
-          <el-form-item label="Cron" prop="scheduleConf">
-            <el-input v-model="formData.scheduleConf" placeholder="请输入 Cron 表达式">
+          <el-form-item label="Cron 定时表达式" prop="scheduleConf">
+            <el-input
+                v-model="formData.scheduleConf"
+                placeholder="自动生成，无需手动输入"
+                readonly
+            >
               <template #append>
-                <el-button :icon="Edit" @click="showCronEditor = !showCronEditor" />
+                <el-popover :visible="showCronEditor && dialogVisible" width="700px" trigger="click">
+                  <CronElementPlus
+                      v-model="formData.scheduleConf"
+                      locale="zh-cn"
+                      :hide-second="false"
+                      :hide-year="false"
+                      @close="showCronEditor = false"
+                  />
+                  <template #reference>
+                    <el-button :icon="Edit" @click="showCronEditor = !showCronEditor" />
+                  </template>
+                </el-popover>
               </template>
             </el-input>
           </el-form-item>
         </el-col>
       </el-row>
 
-      <!-- Cron 编辑器 -->
-      <el-form-item v-if="showCronEditor" label="Cron 生成器">
-        <el-input
-            v-model="formData.scheduleConf"
-            type="textarea"
-            :rows="2"
-            placeholder="0/1 0/1 0/1 * * ?"
-        />
-      </el-form-item>
 
       <!-- 任务配置 -->
       <el-divider content-position="left">任务配置</el-divider>
@@ -197,6 +203,12 @@ import { ref, reactive, watch, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import { updateTaskInfo, type TaskInfoRes, type TaskUpdateParams, getJobGroupList, type JobGroupRes } from '../../api/dataManagement'
+
+
+// ✅ 修改后
+import { CronElementPlus  } from '@vue-js-cron/element-plus'
+import '@vue-js-cron/element-plus/dist/element-plus.css'
+
 
 // Props
 interface Props {
@@ -368,5 +380,17 @@ onMounted(() => {
 
 :deep(.el-form-item__label) {
   font-weight: 500;
+}
+
+.cron-wrapper :deep(.el-form-item__content) {
+  flex-wrap: nowrap;
+}
+.cron-box {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
 }
 </style>

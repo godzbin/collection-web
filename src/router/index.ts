@@ -62,7 +62,7 @@ const router = createRouter({
 });
 
 // 定义不需要登录即可访问的白名单
-const whiteList = ["/login", "/taskList", "/setting", "/log", "/about"];
+const whiteList = ["/login", "/setting", "/about"];
 
 // 全局前置守卫
 router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {

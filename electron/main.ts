@@ -37,7 +37,9 @@ function saveConfig(config: any): boolean {
     const configData = {
       serviceUrl: config.serviceUrl || DEFAULT_CONFIG.serviceUrl,
       xxlJobUrl: config.xxlJobUrl || DEFAULT_CONFIG.xxlJobUrl,
-      logFilePath: config.logFilePath || ''
+      logFilePath: config.logFilePath || '',
+      xxlUsername: config.xxlUsername || '',
+      xxlPassword: config.xxlPassword || ''
     };
 
     // 确保目录存在

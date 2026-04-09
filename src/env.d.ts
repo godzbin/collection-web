@@ -34,3 +34,10 @@ interface Window {
         invoke:(channel: string, ...args: any[]) => Promise<any>;
     };
 }
+
+// src/types/shims-vue.d.ts (或者你的全局声明文件)
+declare module 'vue3-cron' {
+    import { DefineComponent } from 'vue'
+    const component: DefineComponent<{}, {}, any>
+    export default component
+}
