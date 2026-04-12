@@ -7,7 +7,7 @@ import axios from "axios";
 // 解决 __dirname 在 ES 模块中的问题
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
+import * as iconv from 'iconv-lite';
 // 配置文件路径 - 使用 userData 目录，保证软件更新时配置不丢失
 const CONFIG_FILE_PATH = path.join(app.getPath('userData'), 'config.json');
 
@@ -191,19 +191,23 @@ app.whenReady().then(() => {
 
         // 情况 2: 文件有新增内容 (大小变大)
         if (currentSize > lastFileSize) {
-          // 读取新增部分
+          // ✅ 修改：移除 encoding，改为 Buffer 读取
           const stream = fs.createReadStream(currentWatchPath, {
-            encoding: "utf-8",
             start: lastFileSize,
             end: currentSize,
           });
 
           let newData = "";
-          stream.on("data", (chunk) => {
-            newData += chunk;
+          // ✅ 新增：创建转码流
+          const decoder = iconv.decodeStream('gbk');
+          stream.pipe(decoder);
+
+          // 监听解码后的文本数据
+          decoder.on('data', (text: string) => {
+            newData += text;
           });
 
-          stream.on("end", () => {
+          decoder.on('end', () => {
             lastFileSize = currentSize; // 更新指针
             if (newData.trim()) {
               // 发送新增数据给渲染进程
@@ -269,7 +273,10 @@ app.whenReady().then(() => {
       if (!fs.existsSync(safePath)) {
         throw new Error("文件不存在");
       }
-      const content = fs.readFileSync(safePath, "utf-8");
+      // ✅ 修改：读取 Buffer 并使用 iconv 解码 (默认 gbk，如需 utf-8 可改为 'utf-8')
+      const buffer = fs.readFileSync(safePath);
+      const content = iconv.decode(buffer, 'gbk');
+
       const lines = content.split(/\r?\n/);
       return { success: true, data: lines };
     } catch (error: any) {

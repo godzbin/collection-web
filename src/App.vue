@@ -45,6 +45,17 @@
           <!-- <span class="menu-text">关于我们</span> -->
         </router-link>
       </div>
+      <!-- ✅ 新增：底部退出按钮 -->
+      <div class="sidebar-footer">
+        <div class="menu-item logout-item" @click="handleLogout" title="退出登录">
+        <span class="menu-icon">
+          <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+            <path d="M170.666667 853.333333V170.666667h256V85.333333H128A42.666667 42.666667 0 0 0 85.333333 128v768a42.666667 42.666667 0 0 0 42.666667 42.666667h298.666667v-85.333334H170.666667z" fill="#fff"/>
+            <path d="M810.666667 512L640 341.333333l60.330667-60.330666L917.333333 498.005333 700.330667 714.666667l-60.330667-60.330667L810.666667 483.669333H426.666667V398.336h384z" fill="#fff"/>
+          </svg>
+        </span>
+        </div>
+      </div>
     </div>
 
     <!-- 右侧内容区 -->
@@ -55,7 +66,19 @@
 </template>
 
 <script setup lang="ts">
-import { RouterLink, RouterView } from "vue-router";
+import { RouterLink, RouterView, useRouter} from "vue-router";
+
+const router = useRouter();
+
+// ✅ 新增：退出登录处理
+const handleLogout = () => {
+  // 1. 清除本地认证数据（根据实际项目键名调整）
+  localStorage.removeItem("token");
+  sessionStorage.clear();
+
+  // 2. 跳转至登录页（若路由路径不同请替换）
+  router.push("/login");
+};
 </script>
 <style>
 * {

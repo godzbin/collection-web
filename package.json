@@ -19,6 +19,7 @@
     "cross-env": "^10.1.0",
     "echarts": "^6.0.0",
     "element-plus": "^2.13.5",
+    "iconv-lite": "^0.7.2",
     "no-vue3-cron": "^2.0.0",
     "vue": "^3.4.21",
     "vue-echarts": "^8.0.1",
