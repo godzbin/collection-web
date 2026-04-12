@@ -80,8 +80,9 @@ function createWindow() {
       devTools: process.env.NODE_ENV === "development",
     },
     frame: true,
+    autoHideMenuBar: true,
     resizable: true,
-    icon: path.join(__dirname, "../public/logo_b_s.png"),
+    icon: path.join(__dirname, "../public/icon.png"),
     backgroundColor: "#f8fafc",
     ...(process.platform === "darwin"
         ? {
@@ -99,7 +100,7 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   return mainWindow;
 }
