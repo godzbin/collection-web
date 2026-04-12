@@ -72,14 +72,9 @@
                 readonly
             >
               <template #append>
-                <el-popover :visible="showCronEditor && dialogVisible" width="700px" trigger="click">
-                  <CronElementPlus
-                      v-model="formData.scheduleConf"
-                      locale="zh-cn"
-                      :hide-second="false"
-                      :hide-year="false"
-                      @close="showCronEditor = false"
-                  />
+                <el-popover :visible="showCronEditor && dialogVisible" width="600px" trigger="click">
+                  <!-- ✅ 替换为自研组件 -->
+                  <XxlCronEditor v-model="formData.scheduleConf" @close="showCronEditor = !showCronEditor"/>
                   <template #reference>
                     <el-button :icon="Edit" @click="showCronEditor = !showCronEditor" />
                   </template>
@@ -204,10 +199,7 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import { updateTaskInfo, type TaskInfoRes, type TaskUpdateParams, getJobGroupList, type JobGroupRes } from '../../api/dataManagement'
 
-
-// ✅ 修改后
-import { CronElementPlus  } from '@vue-js-cron/element-plus'
-import '@vue-js-cron/element-plus/dist/element-plus.css'
+import XxlCronEditor from '../../components/XxlCronEditor.vue'
 
 
 // Props
@@ -265,9 +257,9 @@ const formRules: FormRules = {
   author: [
     { required: true, message: '请输入负责人', trigger: 'blur' }
   ],
-  alarmEmail: [
-    { required: true, message: '请输入报警邮件', trigger: 'blur' }
-  ],
+  // alarmEmail: [
+  //   { required: true, message: '请输入报警邮件', trigger: 'blur' }
+  // ],
   scheduleType: [
     { required: true, message: '请选择调度类型', trigger: 'change' }
   ],
