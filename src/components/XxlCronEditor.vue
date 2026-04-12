@@ -55,7 +55,8 @@ import { ref, reactive, computed, watch } from 'vue'
 
 const props = defineProps<{ modelValue?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string], close: [] }>()
-
+// 1. 定义严格的字段键名类型
+type CronField = 'second' | 'minute' | 'hour' | 'day' | 'month' | 'week'
 const activeTab = ref('second')
 const weekLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
@@ -75,7 +76,7 @@ const initField = (): FieldConfigData => ({
   values: []
 })
 
-const cronData = reactive({
+const cronData = reactive<Record<CronField, FieldConfigData>>({
   second: initField(),
   minute: initField(),
   hour: initField(),
@@ -84,7 +85,16 @@ const cronData = reactive({
   week: { ...initField(), type: 'none' }
 })
 
-const tabsConfig = [
+interface TabConfig {
+  key: CronField
+  label: string
+  min: number
+  max: number
+  allowNone?: boolean
+  labels?: string[]
+}
+
+const tabsConfig: TabConfig[] = [
   { key: 'second', label: '秒', min: 0, max: 59 },
   { key: 'minute', label: '分', min: 0, max: 59 },
   { key: 'hour', label: '时', min: 0, max: 23 },
