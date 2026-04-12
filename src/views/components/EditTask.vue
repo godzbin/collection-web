@@ -18,7 +18,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="执行器" prop="jobGroup">
-            <el-select v-model="formData.jobGroup" placeholder="请选择执行器" style="width: 100%">
+            <el-select v-model="formData.jobGroup" placeholder="请选择执行器" style="width: 100%" disabled>
               <el-option
                   v-for="item in jobGroupList"
                   :key="item.id"
@@ -31,7 +31,7 @@
 
         <el-col :span="12">
           <el-form-item label="任务描述" prop="jobDesc">
-            <el-input v-model="formData.jobDesc" placeholder="请输入任务描述" />
+            <el-input v-model="formData.jobDesc" placeholder="请输入任务描述" disabled />
           </el-form-item>
         </el-col>
       </el-row>
@@ -39,13 +39,13 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="负责人" prop="author">
-            <el-input v-model="formData.author" placeholder="请输入负责人" />
+            <el-input v-model="formData.author" placeholder="请输入负责人" disabled />
           </el-form-item>
         </el-col>
 
         <el-col :span="12">
           <el-form-item label="报警邮件" prop="alarmEmail">
-            <el-input v-model="formData.alarmEmail" placeholder="请输入报警邮件" />
+            <el-input v-model="formData.alarmEmail" placeholder="请输入报警邮件" disabled />
           </el-form-item>
         </el-col>
       </el-row>
@@ -56,7 +56,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="调度类型" prop="scheduleType">
-            <el-select v-model="formData.scheduleType" placeholder="请选择调度类型" style="width: 100%">
+            <el-select v-model="formData.scheduleType" placeholder="请选择调度类型" style="width: 100%" disabled>
               <el-option label="CRON" value="CRON" />
               <el-option label="FIX_RATE" value="FIX_RATE" />
               <el-option label="FIX_DELAY" value="FIX_DELAY" />
@@ -73,7 +73,6 @@
             >
               <template #append>
                 <el-popover :visible="showCronEditor && dialogVisible" width="600px" trigger="click">
-                  <!-- ✅ 替换为自研组件 -->
                   <XxlCronEditor v-model="formData.scheduleConf" @close="showCronEditor = !showCronEditor"/>
                   <template #reference>
                     <el-button :icon="Edit" @click="showCronEditor = !showCronEditor" />
@@ -100,7 +99,7 @@
 
         <el-col :span="12">
           <el-form-item label="JobHandler" prop="executorHandler">
-            <el-input v-model="formData.executorHandler" placeholder="请输入 JobHandler" />
+            <el-input v-model="formData.executorHandler" placeholder="请输入 JobHandler" disabled />
           </el-form-item>
         </el-col>
       </el-row>
@@ -124,7 +123,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="路由策略" prop="executorRouteStrategy">
-            <el-select v-model="formData.executorRouteStrategy" placeholder="请选择路由策略" style="width: 100%">
+            <el-select v-model="formData.executorRouteStrategy" placeholder="请选择路由策略" style="width: 100%" disabled>
               <el-option label="第一个" value="FIRST" />
               <el-option label="最后一个" value="LAST" />
               <el-option label="轮询" value="ROUND" />
@@ -141,7 +140,7 @@
 
         <el-col :span="12">
           <el-form-item label="子任务 ID" prop="childJobId">
-            <el-input v-model="formData.childJobId" placeholder="请输入子任务 ID" />
+            <el-input v-model="formData.childJobId" placeholder="请输入子任务 ID" disabled />
           </el-form-item>
         </el-col>
       </el-row>
@@ -149,7 +148,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="调度过期策略" prop="misfireStrategy">
-            <el-select v-model="formData.misfireStrategy" placeholder="请选择调度过期策略" style="width: 100%">
+            <el-select v-model="formData.misfireStrategy" placeholder="请选择调度过期策略" style="width: 100%" disabled>
               <el-option label="忽略" value="DO_NOTHING" />
               <el-option label="立即执行一次" value="FIRE_ONCE_NOW" />
             </el-select>
@@ -158,7 +157,7 @@
 
         <el-col :span="12">
           <el-form-item label="阻塞处理策略" prop="executorBlockStrategy">
-            <el-select v-model="formData.executorBlockStrategy" placeholder="请选择阻塞处理策略" style="width: 100%">
+            <el-select v-model="formData.executorBlockStrategy" placeholder="请选择阻塞处理策略" style="width: 100%" disabled>
               <el-option label="单机串行" value="SERIAL_EXECUTION" />
               <el-option label="丢弃后续调度" value="DISCARD_LATER" />
               <el-option label="覆盖之前调度" value="COVER_EARLY" />
@@ -170,13 +169,13 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="任务超时时间" prop="executorTimeout">
-            <el-input-number v-model="formData.executorTimeout" :min="0" :max="99999" style="width: 100%" />
+            <el-input-number v-model="formData.executorTimeout" :min="0" :max="99999" style="width: 100%" disabled />
           </el-form-item>
         </el-col>
 
         <el-col :span="12">
           <el-form-item label="失败重试次数" prop="executorFailRetryCount">
-            <el-input-number v-model="formData.executorFailRetryCount" :min="0" :max="20" style="width: 100%" />
+            <el-input-number v-model="formData.executorFailRetryCount" :min="0" :max="20" style="width: 100%" disabled />
           </el-form-item>
         </el-col>
       </el-row>
@@ -257,9 +256,6 @@ const formRules: FormRules = {
   author: [
     { required: true, message: '请输入负责人', trigger: 'blur' }
   ],
-  // alarmEmail: [
-  //   { required: true, message: '请输入报警邮件', trigger: 'blur' }
-  // ],
   scheduleType: [
     { required: true, message: '请选择调度类型', trigger: 'change' }
   ],
@@ -287,7 +283,6 @@ const formRules: FormRules = {
 watch(() => props.modelValue, (val) => {
   dialogVisible.value = val
   if (val && props.taskData) {
-    // 填充表单数据
     Object.assign(formData, props.taskData)
   }
 })
@@ -316,7 +311,6 @@ const handleSave = async () => {
 
     loading.value = true
     try {
-      // 构造符合 XXL-Job 要求的参数
       const updateParams: TaskUpdateParams = {
         id: formData.id!,
         jobGroup: formData.jobGroup!,
@@ -325,7 +319,6 @@ const handleSave = async () => {
         alarmEmail: formData.alarmEmail,
         scheduleType: formData.scheduleType,
         scheduleConf: formData.scheduleConf,
-        // 添加 XXL-Job 需要的额外参数
         cronGen_display: formData.scheduleConf,
         schedule_conf_CRON: formData.scheduleType === 'CRON' ? formData.scheduleConf : '',
         schedule_conf_FIX_RATE: formData.scheduleType === 'FIX_RATE' ? formData.scheduleConf : '',

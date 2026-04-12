@@ -74,7 +74,7 @@
       <!-- 第三步：Log 文件地址配置 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">4</div>
+          <div class="step-number">3</div>
           <div class="step-title">Log 文件地址配置</div>
         </div>
         <div class="step-content">
