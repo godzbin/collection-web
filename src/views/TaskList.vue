@@ -140,6 +140,201 @@ const currentPage = computed(() => {
   return Math.floor(pagination.start / pagination.length) + 1
 })
 
+// 解析 CRON 表达式为自然语言（XXL-JOB 风格）
+const parseCronExpression = (cron: string): string => {
+  if (!cron || cron.trim() === '') return ''
+
+  const parts = cron.trim().split(/\s+/)
+  if (parts.length !== 6) return cron
+
+  const [second, minute, hour, day, month, week] = parts
+
+  // 检查日和周是否有冲突
+  const hasDay = day !== '?' && day !== '*'
+  const hasWeek = week !== '?' && week !== '*'
+
+  let descriptions: string[] = []
+
+  // 解析月
+  if (month === '*') {
+    // 每月，省略不显示
+  } else if (/^\d+$/.test(month)) {
+    descriptions.push(`${month}月`)
+  } else if (/^\d+\/\d+$/.test(month)) {
+    const [start, step] = month.split('/')
+    descriptions.push(`从${start}月开始每${step}个月`)
+  } else if (/^\d+-\d+$/.test(month)) {
+    const [start, end] = month.split('-')
+    descriptions.push(`${start}至${end}月`)
+  } else if (month.includes(',')) {
+    descriptions.push(`${month.replace(/,/g, ',')}月`)
+  }
+
+  // 解析日或周
+  if (hasDay && hasWeek) {
+    // 日和周不能同时指定，优先显示日
+    if (day === 'L') {
+      descriptions.push('每月最后一天')
+    } else if (/^\d+$/.test(day)) {
+      descriptions.push(`${day}号`)
+    } else if (/^\d+\/\d+$/.test(day)) {
+      const [start, step] = day.split('/')
+      descriptions.push(`从${start}号开始每${step}天`)
+    } else if (/^\d+-\d+$/.test(day)) {
+      const [start, end] = day.split('-')
+      descriptions.push(`${start}至${end}号`)
+    } else if (day.includes(',')) {
+      descriptions.push(`${day.replace(/,/g, ',')}号`)
+    } else if (day.includes('W')) {
+      const d = day.replace('W', '')
+      descriptions.push(`${d}号最近的工作日`)
+    } else if (day.includes('L')) {
+      const d = day.replace('L', '')
+      descriptions.push(`本月最后一个${d}号`)
+    }
+  } else if (hasDay) {
+    if (day === 'L') {
+      descriptions.push('每月最后一天')
+    } else if (/^\d+$/.test(day)) {
+      descriptions.push(`${day}号`)
+    } else if (/^\d+\/\d+$/.test(day)) {
+      const [start, step] = day.split('/')
+      descriptions.push(`从${start}号开始每${step}天`)
+    } else if (/^\d+-\d+$/.test(day)) {
+      const [start, end] = day.split('-')
+      descriptions.push(`${start}至${end}号`)
+    } else if (day.includes(',')) {
+      descriptions.push(`${day.replace(/,/g, ',')}号`)
+    } else if (day.includes('W')) {
+      const d = day.replace('W', '')
+      descriptions.push(`${d}号最近的工作日`)
+    } else if (day.includes('L')) {
+      const d = day.replace('L', '')
+      descriptions.push(`本月最后一个${d}号`)
+    }
+  } else if (hasWeek) {
+    if (/^\d+$/.test(week)) {
+      const weekMap: Record<string, string> = {
+        '1': '周日', '2': '周一', '3': '周二', '4': '周三',
+        '5': '周四', '6': '周五', '7': '周六'
+      }
+      descriptions.push(weekMap[week] || week)
+    } else if (/^\d+\/\d+$/.test(week)) {
+      const [start, step] = week.split('/')
+      const weekMap: Record<string, string> = {
+        '1': '周日', '2': '周一', '3': '周二', '4': '周三',
+        '5': '周四', '6': '周五', '7': '周六'
+      }
+      descriptions.push(`从${weekMap[start] || start}开始每${step}天`)
+    } else if (/^\d+-\d+$/.test(week)) {
+      const [start, end] = week.split('-')
+      const weekMap: Record<string, string> = {
+        '1': '周日', '2': '周一', '3': '周二', '4': '周三',
+        '5': '周四', '6': '周五', '7': '周六'
+      }
+      descriptions.push(`${weekMap[start] || start}至${weekMap[end] || end}`)
+    } else if (week.includes(',')) {
+      const weekMap: Record<string, string> = {
+        '1': '周日', '2': '周一', '3': '周二', '4': '周三',
+        '5': '周四', '6': '周五', '7': '周六'
+      }
+      const days = week.split(',').map(d => weekMap[d] || d).join(',')
+      descriptions.push(days)
+    } else if (week.includes('#')) {
+      const [dayNum, weekNum] = week.split('#')
+      const weekMap: Record<string, string> = {
+        '1': '周日', '2': '周一', '3': '周二', '4': '周三',
+        '5': '周四', '6': '周五', '7': '周六'
+      }
+      const ordinals: Record<string, string> = {
+        '1': '第一个', '2': '第二个', '3': '第三个', '4': '第四个', '5': '第五个'
+      }
+      descriptions.push(`第${ordinals[weekNum] || weekNum}${weekMap[dayNum] || dayNum}`)
+    } else if (week.includes('L')) {
+      const dayNum = week.replace('L', '')
+      const weekMap: Record<string, string> = {
+        '1': '周日', '2': '周一', '3': '周二', '4': '周三',
+        '5': '周四', '6': '周五', '7': '周六'
+      }
+      descriptions.push(`最后一个${weekMap[dayNum] || dayNum}`)
+    }
+  }
+
+  // 解析时
+  if (hour === '*') {
+    // 每小时，省略
+  } else if (/^\d+$/.test(hour)) {
+    descriptions.push(`${hour}点`)
+  } else if (/^\*\/\d+$/.test(hour)) {
+    const step = hour.split('/')[1]
+    descriptions.push(`每${step}小时`)
+  } else if (/^\d+\/\d+$/.test(hour)) {
+    const [start, step] = hour.split('/')
+    descriptions.push(`从${start}点开始每${step}小时`)
+  } else if (/^\d+-\d+$/.test(hour)) {
+    const [start, end] = hour.split('-')
+    descriptions.push(`${start}至${end}点`)
+  } else if (hour.includes(',')) {
+    descriptions.push(`${hour.replace(/,/g, ',')}点`)
+  }
+
+  // 解析分
+  if (minute === '*') {
+    // 每分钟，省略
+  } else if (/^\d+$/.test(minute)) {
+    descriptions.push(`${minute}分`)
+  } else if (/^0\/\d+$/.test(minute) || /^\*\/\d+$/.test(minute)) {
+    const step = minute.split('/')[1]
+    descriptions.push(`每${step}分钟`)
+  } else if (/^\d+\/\d+$/.test(minute)) {
+    const [start, step] = minute.split('/')
+    descriptions.push(`从${start}分开始每${step}分钟`)
+  } else if (/^\d+-\d+$/.test(minute)) {
+    const [start, end] = minute.split('-')
+    descriptions.push(`${start}至${end}分`)
+  } else if (minute.includes(',')) {
+    descriptions.push(`${minute.replace(/,/g, ',')}分`)
+  }
+
+  // 解析秒
+  if (second === '*') {
+    // 每秒，省略
+  } else if (/^\d+$/.test(second)) {
+    descriptions.push(`${second}秒`)
+  } else if (/^\d+\/\d+$/.test(second)) {
+    const [start, step] = second.split('/')
+    descriptions.push(`从${start}秒开始每${step}秒`)
+  } else if (/^\d+-\d+$/.test(second)) {
+    const [start, end] = second.split('-')
+    descriptions.push(`${start}至${end}秒`)
+  } else if (second.includes(',')) {
+    descriptions.push(`${second.replace(/,/g, ',')}秒`)
+  }
+
+  return descriptions.join(' ')
+}
+
+// 将调度类型转换为自然语言描述
+const getScheduleDescription = (row: any): string => {
+  const typeMap: Record<string, string> = {
+    'CRON': 'Cron定时',
+    'FIX_RATE': '固定频率',
+    'FIX_DELAY': '固定延迟'
+  }
+
+  const typeName = typeMap[row.scheduleType] || row.scheduleType
+
+  if (row.scheduleType === 'CRON') {
+    const cronDesc = parseCronExpression(row.scheduleConf)
+    return `${typeName}: ${cronDesc}`
+  } else if (row.scheduleType === 'FIX_RATE') {
+    return `${typeName}: 每${row.scheduleConf}秒`
+  } else if (row.scheduleType === 'FIX_DELAY') {
+    return `${typeName}: 延迟${row.scheduleConf}秒`
+  }
+
+  return `${typeName}: ${row.scheduleConf}`
+}
 const jobGroupList = ref<JobGroupRes[]>([])
 
 const init = async ()=> {
@@ -400,7 +595,7 @@ onUnmounted(() => {
         <el-table-column prop="jobDesc" label="任务描述" />
         <el-table-column prop="scheduleType" label="调度类型" width="180">
           <template #default="scope">
-            {{ scope.row.scheduleType }}: {{ scope.row.scheduleConf}}
+            {{ getScheduleDescription(scope.row) }}
           </template>
         </el-table-column>
         <el-table-column prop="executorRouteStrategy" label="运行模式" >
