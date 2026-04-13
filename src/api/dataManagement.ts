@@ -9,6 +9,8 @@ export interface DayLoadParams {
     /*任务ID */
     taskId?: number;
 
+    day?: number;
+
     /*数据导入日期 */
     importDay?: string | number;
 
