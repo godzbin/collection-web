@@ -1,5 +1,5 @@
 // Parameter interface
-import {post} from "./index.ts";
+import { post, get} from "./index.ts";
 import {postByXXL} from "./xxlJob.ts";
 
 export interface DayLoadParams {
@@ -62,7 +62,7 @@ export interface DayLoadRes {
  * @returns
  */
 export function getDayLoadDataList(params: DayLoadParams): Promise<DayLoadRes[]> {
-    return post(`/pubtaskinfo/list`, params);
+    return get(`/pubtaskinfo/list`, params);
 }
 
 // XXL-Job 任务管理接口
@@ -226,4 +226,14 @@ export function startJob(id: number): Promise<any> {
  */
 export function stopJob(id: number): Promise<any> {
     return postByXXL(`/jobinfo/stop`, { id });
+}
+
+
+export const getDayLoadConfigList = (): Promise<any[]> => {
+    return post("/pubtask/tree");
+}
+
+// 保存每日导入配置
+export const saveDayLoadConfig = (data: any): Promise<any> => {
+    return post("/pubtask/batch/update", data);
 }

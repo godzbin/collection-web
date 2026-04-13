@@ -17,6 +17,11 @@
           <!-- <span class="menu-text">主页</span> -->
         </router-link>
 
+        <router-link to="/taskInfo" class="menu-item" active-class="active">
+          <span class="menu-icon">
+            <el-icon :size="20"><DocumentChecked /></el-icon>
+          </span>
+        </router-link>
         <router-link to="/taskList" class="menu-item" active-class="active">
           <span class="menu-icon">
             <svg t="1775358885264" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4798" width="200" height="200"><path d="M79.677 876.45H876.45v88.53H79.677z" fill="#fff" p-id="4799"></path><path d="M684.634 604.957H271.493c-17.706 0-29.51-11.804-29.51-29.51s11.804-29.51 29.51-29.51h413.141c17.706 0 29.51 11.804 29.51 29.51s-14.755 29.51-29.51 29.51z m0 120.991H271.493c-17.706 0-29.51-11.804-29.51-29.51s11.804-29.51 29.51-29.51h413.141c17.706 0 29.51 11.804 29.51 29.51s-14.755 29.51-29.51 29.51z m-35.412-360.023H448.553c-17.706 0-29.51-11.804-29.51-29.51s11.804-29.51 29.51-29.51h200.669c17.706 0 29.51 11.804 29.51 29.51s-11.804 29.51-29.51 29.51z m35.412 120.991H271.493c-17.706 0-29.51-11.804-29.51-29.51s11.804-29.51 29.51-29.51h413.141c17.706 0 29.51 11.804 29.51 29.51s-14.755 29.51-29.51 29.51z" fill="#fff" p-id="4800"></path><path d="M779.066 994.49h-616.76c-61.972 0-112.139-53.118-112.139-115.09V327.563c0-17.706 5.902-32.461 17.706-44.265L321.66 20.657C333.464 5.902 348.219 0 365.925 0h413.141c61.971 0 112.139 53.118 112.139 115.09v761.36c0 64.922-50.168 118.04-112.139 118.04zM365.926 59.02L109.186 324.611v554.79c0 32.46 23.608 56.069 53.118 56.069h616.761c29.51 0 53.118-26.56 53.118-56.07V115.09c0-32.462-23.608-56.07-53.118-56.07h-413.14z" fill="#fff" p-id="4801"></path><path d="M377.73 56.07l2.95 224.276c0 32.46-23.608 59.02-56.069 59.02l-218.375 2.951" fill="#fff" p-id="4802"></path><path d="M106.236 371.827v-59.02l218.375-2.951c14.755 0 26.559-14.755 26.559-29.51l-2.951-224.277h59.02l2.951 224.277c0 50.167-38.363 88.53-85.579 91.481H106.236z" fill="#fff" p-id="4803"></path><path d="M472.162 758.41a236.08 236.08 0 1 0 472.16 0 236.08 236.08 0 1 0-472.16 0z" fill="#fff" p-id="4804"></path><path d="M708.242 1024c-67.873 0-135.746-26.56-188.864-76.726-103.286-103.286-103.286-271.493 0-374.778 50.167-50.167 118.04-76.727 188.864-76.727s138.697 26.56 188.865 76.727c50.167 50.167 76.726 118.04 76.726 188.864s-26.56 138.698-76.726 188.865C843.988 997.44 776.115 1024 708.242 1024z m0-472.161c-56.07 0-106.236 20.657-144.6 61.97-79.677 79.678-79.677 212.473 0 292.15s212.473 79.678 292.15 0c38.364-38.362 61.972-91.48 61.972-144.599s-20.657-106.236-61.971-144.6c-41.315-44.264-91.482-64.921-147.55-64.921z" fill="#FFFFFF" p-id="4805"></path><path d="M802.674 826.282h-147.55v-147.55c0-17.706 11.804-29.51 29.51-29.51s29.51 11.804 29.51 29.51v88.53h88.53c17.706 0 29.51 11.804 29.51 29.51 0 14.755-11.804 29.51-29.51 29.51z" fill="#000" p-id="4806"></path></svg>
@@ -60,18 +65,36 @@
 
     <!-- 右侧内容区 -->
     <div class="content-area">
-      <RouterView />
+<!--      <keep-alive>-->
+<!--        <RouterView />-->
+<!--      </keep-alive>-->
+
+      <router-view v-slot="{ Component, route }">
+        <keep-alive>
+          <component
+              :key="route.name"
+              :is="Component"
+          ></component>
+        </keep-alive>
+      </router-view>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { RouterLink, RouterView, useRouter} from "vue-router";
-
+import {DocumentChecked} from '@element-plus/icons-vue'
+import {ElMessageBox} from "element-plus";
 const router = useRouter();
 
+
 // ✅ 新增：退出登录处理
-const handleLogout = () => {
+const handleLogout = async () => {
+  await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
   // 1. 清除本地认证数据（根据实际项目键名调整）
   localStorage.removeItem("token");
   sessionStorage.clear();
@@ -169,12 +192,22 @@ body {
 }
 
 .sidebar {
+  position: relative;
   width: 80px;
   background-color: #1e293b;
   color: white;
   /* padding: 20px 0; */
-  border-right: 1px solid #334155;
+  //border-right: 1px solid #334155;
 }
+
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  margin: auto;
+  left: 0;
+  right: 0;
+}
+
 
 .logo-container {
   /* padding: 0 20px 20px; */
@@ -222,6 +255,7 @@ body {
   width: 20px;
   margin: 0 auto;
   text-align: center;
+  color: #fff;
   /* margin-right: 12px; */
 }
 
