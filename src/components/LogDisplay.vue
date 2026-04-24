@@ -148,15 +148,25 @@ watch(
 )
 
 // 格式化时间
-const formatTime = (timestamp: string) => {
-  return timestamp.includes('-') ? new Date(timestamp).toLocaleTimeString('zh-CN', {
+const formatTime = (timestamp: Date | string) => {
+  if (typeof timestamp === 'string') {
+    return timestamp.includes('-') ? new Date(timestamp).toLocaleTimeString('zh-CN', {
+      hour12: false,
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }) : timestamp
+  }
+  return timestamp.toLocaleTimeString('zh-CN', {
     hour12: false,
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
-  }) : timestamp
+  })
 }
 
 // 格式化消息（支持简单标记）

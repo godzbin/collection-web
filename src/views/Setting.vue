@@ -171,35 +171,35 @@ const loadConfig = async () => {
   }
 }
 
-// 选择文件
-const handleSelectFile = async () => {
-  try {
-    if (!window.electronAPI) {
-      ElMessage.warning('非 Electron 环境，不支持文件选择')
-      return
-    }
-
-    const result = await window.electronAPI.selectFile({
-      title: '选择日志文件',
-      filters: [
-        { name: '日志文件', extensions: ['log', 'txt'] },
-        { name: '所有文件', extensions: ['*'] }
-      ]
-    })
-
-    if (result.success && result.filePath) {
-      config.value.logFilePath = result.filePath
-      ElMessage.success(`已选择: ${result.fileName}`)
-    } else if (result.canceled) {
-      console.log('用户取消了文件选择')
-    } else {
-      ElMessage.error(result.error || '选择文件失败')
-    }
-  } catch (error) {
-    console.error('选择文件时出错:', error)
-    ElMessage.error('选择文件失败')
-  }
-}
+// // 选择文件
+// const handleSelectFile = async () => {
+//   try {
+//     if (!window.electronAPI) {
+//       ElMessage.warning('非 Electron 环境，不支持文件选择')
+//       return
+//     }
+//
+//     const result = await window.electronAPI.selectFile({
+//       title: '选择日志文件',
+//       filters: [
+//         { name: '日志文件', extensions: ['log', 'txt'] },
+//         { name: '所有文件', extensions: ['*'] }
+//       ]
+//     })
+//
+//     if (result.success && result.filePath) {
+//       config.value.logFilePath = result.filePath
+//       ElMessage.success(`已选择: ${result.fileName}`)
+//     } else if (result.canceled) {
+//       console.log('用户取消了文件选择')
+//     } else {
+//       ElMessage.error(result.error || '选择文件失败')
+//     }
+//   } catch (error) {
+//     console.error('选择文件时出错:', error)
+//     ElMessage.error('选择文件失败')
+//   }
+// }
 
 // 保存配置
 const handleSave = async () => {
