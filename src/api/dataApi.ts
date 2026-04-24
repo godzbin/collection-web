@@ -1,4 +1,4 @@
-import {post} from "./index.ts";
+import {get, post} from "./index.ts";
 // Parameter interface
 export interface PubNodeAvgPrice {
     /* */
@@ -278,4 +278,44 @@ export interface PubLoadPrediction {
  */
 export function getPubLoadPrediction(params: PubLoadPrediction): Promise<PubLoadPrediction[]> {
     return post(`/publoadprediction/list`, params);
+}
+
+/*
+type	日志类型，仅支持 info 或 error，默认 info,示例值(info)	query	false
+string
+date	日志日期，格式 yyyy-MM-dd；不传时默认读取当天日志	query	false
+string
+cursor	向更早日志翻页的游标。首次查询可不传，后续传上一次返回的 nextCursor	query	false
+integer(int64)
+ */
+interface LogParams {
+    type?: string;
+    date?: string;
+    cursor?: string;
+}
+/*
+参数名称
+参数说明
+类型
+schema
+type	日志类型，仅支持 info 或 error	string
+logDate	实际读取的日志日期，格式 yyyy-MM-dd	string
+filePath	日志文件路径	string
+cursor	本次查询使用的日志游标	integer(int64)	integer(int64)
+nextCursor	下一次向更早日志翻页时应传入的游标	integer(int64)	integer(int64)
+hasMore	是否还有更早的日志内容	boolean
+lines	当前页日志内容，按时间倒序返回，第一行是最新日志	array
+ */
+export interface Log {
+    type?: string;
+    logDate?: string;
+    filePath?: string;
+    cursor?: string;
+    nextCursor?: string;
+    hasMore?: boolean;
+    lines?: any[];
+}
+// 加载日志
+export function getLoadLog(params: LogParams): Promise<Log> {
+    return get(`/file/logback/realtime`, params);
 }

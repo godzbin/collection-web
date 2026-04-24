@@ -5,10 +5,10 @@
       <div class="toolbar-left">
         <select v-model="levelFilter" class="filter-select">
           <option value="all">全部级别</option>
-          <option value="info">Info</option>
-          <option value="warn">Warn</option>
-          <option value="error">Error</option>
-          <option value="debug">Debug</option>
+          <option value="INFO">Info</option>
+          <option value="WARN">Warn</option>
+          <option value="ERROR">Error</option>
+          <option value="DEBUG">Debug</option>
         </select>
 
         <input
@@ -148,15 +148,15 @@ watch(
 )
 
 // 格式化时间
-const formatTime = (timestamp: Date | string) => {
-  return new Date(timestamp).toLocaleTimeString('zh-CN', {
+const formatTime = (timestamp: string) => {
+  return timestamp.includes('-') ? new Date(timestamp).toLocaleTimeString('zh-CN', {
     hour12: false,
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
-  })
+  }) : timestamp
 }
 
 // 格式化消息（支持简单标记）

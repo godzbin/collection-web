@@ -71,35 +71,35 @@
         </div>
       </div>
 
-      <!-- 第三步：Log 文件地址配置 -->
-      <div class="step">
-        <div class="step-header">
-          <div class="step-number">3</div>
-          <div class="step-title">Log 文件地址配置</div>
-        </div>
-        <div class="step-content">
-          <div class="setting-item">
-            <label>Log 文件存储路径：</label>
-            <div class="file-selector">
-              <input
-                  v-model="config.logFilePath"
-                  type="text"
-                  placeholder="请选择日志文件"
-                  class="setting-input file-input"
-                  readonly
-              />
-              <button @click="handleSelectFile" class="select-file-btn" :disabled="loading">
-                选择文件
-              </button>
-            </div>
-            <div class="setting-hint">
-              <p><strong>说明：</strong></p>
-              <p>点击"选择文件"按钮选择要监听的日志文件。</p>
-              <p>当前配置：<strong>{{ config.logFilePath || '未设置' }}</strong></p>
-            </div>
-          </div>
-        </div>
-      </div>
+<!--      &lt;!&ndash; 第三步：Log 文件地址配置 &ndash;&gt;-->
+<!--      <div class="step">-->
+<!--        <div class="step-header">-->
+<!--          <div class="step-number">3</div>-->
+<!--          <div class="step-title">Log 文件地址配置</div>-->
+<!--        </div>-->
+<!--        <div class="step-content">-->
+<!--          <div class="setting-item">-->
+<!--            <label>Log 文件存储路径：</label>-->
+<!--            <div class="file-selector">-->
+<!--              <input-->
+<!--                  v-model="config.logFilePath"-->
+<!--                  type="text"-->
+<!--                  placeholder="请选择日志文件"-->
+<!--                  class="setting-input file-input"-->
+<!--                  readonly-->
+<!--              />-->
+<!--              <button @click="handleSelectFile" class="select-file-btn" :disabled="loading">-->
+<!--                选择文件-->
+<!--              </button>-->
+<!--            </div>-->
+<!--            <div class="setting-hint">-->
+<!--              <p><strong>说明：</strong></p>-->
+<!--              <p>点击"选择文件"按钮选择要监听的日志文件。</p>-->
+<!--              <p>当前配置：<strong>{{ config.logFilePath || '未设置' }}</strong></p>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
 
       <!-- 保存按钮 -->
       <div class="save-section">

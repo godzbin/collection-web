@@ -12419,9 +12419,9 @@ var asynckit = asynckit$1;
 var setToStringTag2 = esSetTostringtag;
 var hasOwn$1 = hasown;
 var populate = populate$1;
-function FormData$1(options) {
-  if (!(this instanceof FormData$1)) {
-    return new FormData$1(options);
+function FormData$2(options) {
+  if (!(this instanceof FormData$2)) {
+    return new FormData$2(options);
   }
   this._overheadLength = 0;
   this._valueLength = 0;
@@ -12432,10 +12432,10 @@ function FormData$1(options) {
     this[option] = options[option];
   }
 }
-util.inherits(FormData$1, CombinedStream);
-FormData$1.LINE_BREAK = "\r\n";
-FormData$1.DEFAULT_CONTENT_TYPE = "application/octet-stream";
-FormData$1.prototype.append = function(field, value, options) {
+util.inherits(FormData$2, CombinedStream);
+FormData$2.LINE_BREAK = "\r\n";
+FormData$2.DEFAULT_CONTENT_TYPE = "application/octet-stream";
+FormData$2.prototype.append = function(field, value, options) {
   options = options || {};
   if (typeof options === "string") {
     options = { filename: options };
@@ -12455,7 +12455,7 @@ FormData$1.prototype.append = function(field, value, options) {
   append2(footer);
   this._trackLength(header, value, options);
 };
-FormData$1.prototype._trackLength = function(header, value, options) {
+FormData$2.prototype._trackLength = function(header, value, options) {
   var valueLength = 0;
   if (options.knownLength != null) {
     valueLength += Number(options.knownLength);
@@ -12465,7 +12465,7 @@ FormData$1.prototype._trackLength = function(header, value, options) {
     valueLength = Buffer.byteLength(value);
   }
   this._valueLength += valueLength;
-  this._overheadLength += Buffer.byteLength(header) + FormData$1.LINE_BREAK.length;
+  this._overheadLength += Buffer.byteLength(header) + FormData$2.LINE_BREAK.length;
   if (!value || !value.path && !(value.readable && hasOwn$1(value, "httpVersion")) && !(value instanceof Stream)) {
     return;
   }
@@ -12473,7 +12473,7 @@ FormData$1.prototype._trackLength = function(header, value, options) {
     this._valuesToMeasure.push(value);
   }
 };
-FormData$1.prototype._lengthRetriever = function(value, callback) {
+FormData$2.prototype._lengthRetriever = function(value, callback) {
   if (hasOwn$1(value, "fd")) {
     if (value.end != void 0 && value.end != Infinity && value.start != void 0) {
       callback(null, value.end + 1 - (value.start ? value.start : 0));
@@ -12499,7 +12499,7 @@ FormData$1.prototype._lengthRetriever = function(value, callback) {
     callback("Unknown stream");
   }
 };
-FormData$1.prototype._multiPartHeader = function(field, value, options) {
+FormData$2.prototype._multiPartHeader = function(field, value, options) {
   if (typeof options.header === "string") {
     return options.header;
   }
@@ -12526,13 +12526,13 @@ FormData$1.prototype._multiPartHeader = function(field, value, options) {
         header = [header];
       }
       if (header.length) {
-        contents += prop + ": " + header.join("; ") + FormData$1.LINE_BREAK;
+        contents += prop + ": " + header.join("; ") + FormData$2.LINE_BREAK;
       }
     }
   }
-  return "--" + this.getBoundary() + FormData$1.LINE_BREAK + contents + FormData$1.LINE_BREAK;
+  return "--" + this.getBoundary() + FormData$2.LINE_BREAK + contents + FormData$2.LINE_BREAK;
 };
-FormData$1.prototype._getContentDisposition = function(value, options) {
+FormData$2.prototype._getContentDisposition = function(value, options) {
   var filename;
   if (typeof options.filepath === "string") {
     filename = path.normalize(options.filepath).replace(/\\/g, "/");
@@ -12545,7 +12545,7 @@ FormData$1.prototype._getContentDisposition = function(value, options) {
     return 'filename="' + filename + '"';
   }
 };
-FormData$1.prototype._getContentType = function(value, options) {
+FormData$2.prototype._getContentType = function(value, options) {
   var contentType = options.contentType;
   if (!contentType && value && value.name) {
     contentType = mime.lookup(value.name);
@@ -12560,13 +12560,13 @@ FormData$1.prototype._getContentType = function(value, options) {
     contentType = mime.lookup(options.filepath || options.filename);
   }
   if (!contentType && value && typeof value === "object") {
-    contentType = FormData$1.DEFAULT_CONTENT_TYPE;
+    contentType = FormData$2.DEFAULT_CONTENT_TYPE;
   }
   return contentType;
 };
-FormData$1.prototype._multiPartFooter = function() {
+FormData$2.prototype._multiPartFooter = function() {
   return (function(next) {
-    var footer = FormData$1.LINE_BREAK;
+    var footer = FormData$2.LINE_BREAK;
     var lastPart = this._streams.length === 0;
     if (lastPart) {
       footer += this._lastBoundary();
@@ -12574,10 +12574,10 @@ FormData$1.prototype._multiPartFooter = function() {
     next(footer);
   }).bind(this);
 };
-FormData$1.prototype._lastBoundary = function() {
-  return "--" + this.getBoundary() + "--" + FormData$1.LINE_BREAK;
+FormData$2.prototype._lastBoundary = function() {
+  return "--" + this.getBoundary() + "--" + FormData$2.LINE_BREAK;
 };
-FormData$1.prototype.getHeaders = function(userHeaders) {
+FormData$2.prototype.getHeaders = function(userHeaders) {
   var header;
   var formHeaders = {
     "content-type": "multipart/form-data; boundary=" + this.getBoundary()
@@ -12589,19 +12589,19 @@ FormData$1.prototype.getHeaders = function(userHeaders) {
   }
   return formHeaders;
 };
-FormData$1.prototype.setBoundary = function(boundary) {
+FormData$2.prototype.setBoundary = function(boundary) {
   if (typeof boundary !== "string") {
     throw new TypeError("FormData boundary must be a string");
   }
   this._boundary = boundary;
 };
-FormData$1.prototype.getBoundary = function() {
+FormData$2.prototype.getBoundary = function() {
   if (!this._boundary) {
     this._generateBoundary();
   }
   return this._boundary;
 };
-FormData$1.prototype.getBuffer = function() {
+FormData$2.prototype.getBuffer = function() {
   var dataBuffer = new Buffer.alloc(0);
   var boundary = this.getBoundary();
   for (var i = 0, len = this._streams.length; i < len; i++) {
@@ -12612,16 +12612,16 @@ FormData$1.prototype.getBuffer = function() {
         dataBuffer = Buffer.concat([dataBuffer, Buffer.from(this._streams[i])]);
       }
       if (typeof this._streams[i] !== "string" || this._streams[i].substring(2, boundary.length + 2) !== boundary) {
-        dataBuffer = Buffer.concat([dataBuffer, Buffer.from(FormData$1.LINE_BREAK)]);
+        dataBuffer = Buffer.concat([dataBuffer, Buffer.from(FormData$2.LINE_BREAK)]);
       }
     }
   }
   return Buffer.concat([dataBuffer, Buffer.from(this._lastBoundary())]);
 };
-FormData$1.prototype._generateBoundary = function() {
+FormData$2.prototype._generateBoundary = function() {
   this._boundary = "--------------------------" + crypto.randomBytes(12).toString("hex");
 };
-FormData$1.prototype.getLengthSync = function() {
+FormData$2.prototype.getLengthSync = function() {
   var knownLength = this._overheadLength + this._valueLength;
   if (this._streams.length) {
     knownLength += this._lastBoundary().length;
@@ -12631,14 +12631,14 @@ FormData$1.prototype.getLengthSync = function() {
   }
   return knownLength;
 };
-FormData$1.prototype.hasKnownLength = function() {
+FormData$2.prototype.hasKnownLength = function() {
   var hasKnownLength = true;
   if (this._valuesToMeasure.length) {
     hasKnownLength = false;
   }
   return hasKnownLength;
 };
-FormData$1.prototype.getLength = function(cb) {
+FormData$2.prototype.getLength = function(cb) {
   var knownLength = this._overheadLength + this._valueLength;
   if (this._streams.length) {
     knownLength += this._lastBoundary().length;
@@ -12658,7 +12658,7 @@ FormData$1.prototype.getLength = function(cb) {
     cb(null, knownLength);
   });
 };
-FormData$1.prototype.submit = function(params, cb) {
+FormData$2.prototype.submit = function(params, cb) {
   var request;
   var options;
   var defaults2 = { method: "post" };
@@ -12705,19 +12705,19 @@ FormData$1.prototype.submit = function(params, cb) {
   }).bind(this));
   return request;
 };
-FormData$1.prototype._error = function(err) {
+FormData$2.prototype._error = function(err) {
   if (!this.error) {
     this.error = err;
     this.pause();
     this.emit("error", err);
   }
 };
-FormData$1.prototype.toString = function() {
+FormData$2.prototype.toString = function() {
   return "[object FormData]";
 };
-setToStringTag2(FormData$1.prototype, "FormData");
-var form_data = FormData$1;
-const FormData$2 = /* @__PURE__ */ getDefaultExportFromCjs(form_data);
+setToStringTag2(FormData$2.prototype, "FormData");
+var form_data = FormData$2;
+const FormData$1 = /* @__PURE__ */ getDefaultExportFromCjs(form_data);
 function isVisitable(thing) {
   return utils$1.isPlainObject(thing) || utils$1.isArray(thing);
 }
@@ -12741,7 +12741,7 @@ function toFormData$1(obj, formData, options) {
   if (!utils$1.isObject(obj)) {
     throw new TypeError("target must be an object");
   }
-  formData = formData || new (FormData$2 || FormData)();
+  formData = formData || new (FormData$1 || FormData)();
   options = utils$1.toFlatObject(
     options,
     {
@@ -12980,7 +12980,7 @@ const platform$1 = {
   isNode: true,
   classes: {
     URLSearchParams: URLSearchParams$1,
-    FormData: FormData$2,
+    FormData: FormData$1,
     Blob: typeof Blob !== "undefined" && Blob || null
   },
   ALPHABET,
@@ -27963,8 +27963,8 @@ const __filename$1 = fileURLToPath(import.meta.url);
 const __dirname$1 = path$1.dirname(__filename$1);
 const CONFIG_FILE_PATH = path$1.join(app.getPath("userData"), "config.json");
 const DEFAULT_CONFIG = {
-  serviceUrl: "http://192.168.1.100:9980",
-  xxlJobUrl: "http://192.168.1.100:38080/xxl-job-admin",
+  serviceUrl: "http://192.168.9.100:9980",
+  xxlJobUrl: "http://192.168.9.100:38080/xxl-job-admin",
   logFilePath: ""
 };
 function readConfig() {
@@ -27999,9 +27999,6 @@ function saveConfig(config) {
     return false;
   }
 }
-let pollTimer = null;
-let lastFileSize = 0;
-let currentWatchPath = "";
 function createWindow() {
   const preloadPath = path$1.join(__dirname$1, "preload.cjs");
   console.log("💡 Preload 绝对路径:", preloadPath);
@@ -28038,7 +28035,6 @@ function createWindow() {
   return mainWindow;
 }
 app.whenReady().then(() => {
-  const mainWindow = createWindow();
   app.on("activate", function() {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -28060,88 +28056,6 @@ app.whenReady().then(() => {
       message: success ? "重置成功" : "重置失败",
       data: DEFAULT_CONFIG
     };
-  });
-  ipcMain.handle("start-log-watch", async (event, logPath) => {
-    console.log(event);
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-    }
-    currentWatchPath = logPath;
-    console.log(`🔄 启动轮询监听: ${logPath}`);
-    try {
-      if (fs$1.existsSync(logPath)) {
-        lastFileSize = fs$1.statSync(logPath).size;
-        console.log(`📏 初始文件大小: ${lastFileSize} bytes`);
-      } else {
-        lastFileSize = 0;
-        console.log("⚠️ 文件不存在，将从 0 开始监听");
-      }
-    } catch (err) {
-      console.error(`获取初始文件状态失败:`, err);
-      lastFileSize = 0;
-    }
-    pollTimer = setInterval(() => {
-      if (!currentWatchPath || !mainWindow || mainWindow.isDestroyed()) {
-        return;
-      }
-      try {
-        if (!fs$1.existsSync(currentWatchPath)) {
-          if (lastFileSize !== 0) {
-            console.log("⚠️ 文件暂时消失，重置指针");
-            lastFileSize = 0;
-          }
-          return;
-        }
-        const stats = fs$1.statSync(currentWatchPath);
-        const currentSize = stats.size;
-        if (currentSize < lastFileSize) {
-          console.log("📉 文件被重置或清空");
-          lastFileSize = currentSize;
-          return;
-        }
-        if (currentSize > lastFileSize) {
-          const stream2 = fs$1.createReadStream(currentWatchPath, {
-            start: lastFileSize,
-            end: currentSize
-          });
-          let newData = "";
-          const decoder = libExports.decodeStream("gbk");
-          stream2.pipe(decoder);
-          decoder.on("data", (text) => {
-            newData += text;
-          });
-          decoder.on("end", () => {
-            lastFileSize = currentSize;
-            if (newData.trim()) {
-              mainWindow.webContents.send("log-file-changed", newData);
-            }
-          });
-          stream2.on("error", (err) => {
-            console.error("读取文件流错误:", err);
-          });
-        }
-      } catch (error) {
-        console.error("轮询检查文件出错:", error);
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send(
-            "log-watch-error",
-            error.message
-          );
-        }
-      }
-    }, 500);
-    return { success: true, message: "轮询监听已启动" };
-  });
-  ipcMain.handle("stop-log-watch", async () => {
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-      currentWatchPath = "";
-      console.log("⏹️ 轮询监听已停止");
-      return { success: true, message: "已停止监听" };
-    }
-    return { success: true, message: "未在监听" };
   });
   ipcMain.handle("window-minimize", () => {
     const window2 = BrowserWindow.getFocusedWindow();

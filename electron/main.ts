@@ -13,8 +13,8 @@ const CONFIG_FILE_PATH = path.join(app.getPath('userData'), 'config.json');
 
 // 默认配置
 const DEFAULT_CONFIG = {
-  serviceUrl: 'http://192.168.1.100:9980',
-  xxlJobUrl: 'http://192.168.1.100:38080/xxl-job-admin',
+  serviceUrl: 'http://192.168.9.100:9980',
+  xxlJobUrl: 'http://192.168.9.100:38080/xxl-job-admin',
   logFilePath: ''
 };
 
@@ -58,9 +58,9 @@ function saveConfig(config: any): boolean {
 }
 
 // 轮询相关状态
-let pollTimer: NodeJS.Timeout | null = null;
-let lastFileSize = 0;
-let currentWatchPath = '';
+// let pollTimer: NodeJS.Timeout | null = null;
+// let lastFileSize = 0;
+// let currentWatchPath = '';
 
 function createWindow() {
   const preloadPath = path.join(__dirname, "preload.cjs");
@@ -106,7 +106,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  const mainWindow = createWindow();
+  // const mainWindow = createWindow();
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -135,116 +135,116 @@ app.whenReady().then(() => {
     };
   });
 
-  // --- 启动轮询监听 ---
-  ipcMain.handle("start-log-watch", async (event: any, logPath: string) => {
-    // 如果已有定时器，先清除
-    console.log(event);
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-    }
-
-    currentWatchPath = logPath;
-    console.log(`🔄 启动轮询监听: ${logPath}`);
-
-    // 初始化文件大小
-    try {
-      if (fs.existsSync(logPath)) {
-        lastFileSize = fs.statSync(logPath).size;
-        console.log(`📏 初始文件大小: ${lastFileSize} bytes`);
-      } else {
-        lastFileSize = 0;
-        console.log("⚠️ 文件不存在，将从 0 开始监听");
-      }
-    } catch (err) {
-      console.error(`获取初始文件状态失败:`, err);
-      lastFileSize = 0;
-    }
-
-    // 设置轮询间隔 (例如 500ms)
-    pollTimer = setInterval(() => {
-      if (!currentWatchPath || !mainWindow || mainWindow.isDestroyed()) {
-        return;
-      }
-
-      try {
-        if (!fs.existsSync(currentWatchPath)) {
-          // 文件不存在时重置指针或跳过
-          if (lastFileSize !== 0) {
-            console.log("⚠️ 文件暂时消失，重置指针");
-            lastFileSize = 0;
-          }
-          return;
-        }
-
-        const stats = fs.statSync(currentWatchPath);
-        const currentSize = stats.size;
-
-        // 情况 1: 文件被清空或重写 (大小变小)
-        if (currentSize < lastFileSize) {
-          console.log("📉 文件被重置或清空");
-          lastFileSize = currentSize;
-          // 可选：通知前端重置日志列表
-          // mainWindow.webContents.send('log-file-reset');
-          return;
-        }
-
-        // 情况 2: 文件有新增内容 (大小变大)
-        if (currentSize > lastFileSize) {
-          // ✅ 修改：移除 encoding，改为 Buffer 读取
-          const stream = fs.createReadStream(currentWatchPath, {
-            start: lastFileSize,
-            end: currentSize,
-          });
-
-          let newData = "";
-          // ✅ 新增：创建转码流
-          const decoder = iconv.decodeStream('gbk');
-          stream.pipe(decoder);
-
-          // 监听解码后的文本数据
-          decoder.on('data', (text: string) => {
-            newData += text;
-          });
-
-          decoder.on('end', () => {
-            lastFileSize = currentSize; // 更新指针
-            if (newData.trim()) {
-              // 发送新增数据给渲染进程
-              mainWindow.webContents.send("log-file-changed", newData);
-            }
-          });
-
-          stream.on("error", (err) => {
-            console.error("读取文件流错误:", err);
-          });
-        }
-        // 情况 3: 大小没变，不做任何操作
-      } catch (error) {
-        console.error("轮询检查文件出错:", error);
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send(
-            "log-watch-error",
-            (error as Error).message
-          );
-        }
-      }
-    }, 500); // 每 500 毫秒检查一次
-
-    return { success: true, message: "轮询监听已启动" };
-  });
-
-  // --- 停止轮询监听 ---
-  ipcMain.handle("stop-log-watch", async () => {
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-      currentWatchPath = "";
-      console.log("⏹️ 轮询监听已停止");
-      return { success: true, message: "已停止监听" };
-    }
-    return { success: true, message: "未在监听" };
-  });
+  // // --- 启动轮询监听 ---
+  // ipcMain.handle("start-log-watch", async (event: any, logPath: string) => {
+  //   // 如果已有定时器，先清除
+  //   console.log(event);
+  //   if (pollTimer) {
+  //     clearInterval(pollTimer);
+  //     pollTimer = null;
+  //   }
+  //
+  //   currentWatchPath = logPath;
+  //   console.log(`🔄 启动轮询监听: ${logPath}`);
+  //
+  //   // 初始化文件大小
+  //   try {
+  //     if (fs.existsSync(logPath)) {
+  //       lastFileSize = fs.statSync(logPath).size;
+  //       console.log(`📏 初始文件大小: ${lastFileSize} bytes`);
+  //     } else {
+  //       lastFileSize = 0;
+  //       console.log("⚠️ 文件不存在，将从 0 开始监听");
+  //     }
+  //   } catch (err) {
+  //     console.error(`获取初始文件状态失败:`, err);
+  //     lastFileSize = 0;
+  //   }
+  //
+  //   // 设置轮询间隔 (例如 500ms)
+  //   pollTimer = setInterval(() => {
+  //     if (!currentWatchPath || !mainWindow || mainWindow.isDestroyed()) {
+  //       return;
+  //     }
+  //
+  //     try {
+  //       if (!fs.existsSync(currentWatchPath)) {
+  //         // 文件不存在时重置指针或跳过
+  //         if (lastFileSize !== 0) {
+  //           console.log("⚠️ 文件暂时消失，重置指针");
+  //           lastFileSize = 0;
+  //         }
+  //         return;
+  //       }
+  //
+  //       const stats = fs.statSync(currentWatchPath);
+  //       const currentSize = stats.size;
+  //
+  //       // 情况 1: 文件被清空或重写 (大小变小)
+  //       if (currentSize < lastFileSize) {
+  //         console.log("📉 文件被重置或清空");
+  //         lastFileSize = currentSize;
+  //         // 可选：通知前端重置日志列表
+  //         // mainWindow.webContents.send('log-file-reset');
+  //         return;
+  //       }
+  //
+  //       // 情况 2: 文件有新增内容 (大小变大)
+  //       if (currentSize > lastFileSize) {
+  //         // ✅ 修改：移除 encoding，改为 Buffer 读取
+  //         const stream = fs.createReadStream(currentWatchPath, {
+  //           start: lastFileSize,
+  //           end: currentSize,
+  //         });
+  //
+  //         let newData = "";
+  //         // ✅ 新增：创建转码流
+  //         const decoder = iconv.decodeStream('gbk');
+  //         stream.pipe(decoder);
+  //
+  //         // 监听解码后的文本数据
+  //         decoder.on('data', (text: string) => {
+  //           newData += text;
+  //         });
+  //
+  //         decoder.on('end', () => {
+  //           lastFileSize = currentSize; // 更新指针
+  //           if (newData.trim()) {
+  //             // 发送新增数据给渲染进程
+  //             mainWindow.webContents.send("log-file-changed", newData);
+  //           }
+  //         });
+  //
+  //         stream.on("error", (err) => {
+  //           console.error("读取文件流错误:", err);
+  //         });
+  //       }
+  //       // 情况 3: 大小没变，不做任何操作
+  //     } catch (error) {
+  //       console.error("轮询检查文件出错:", error);
+  //       if (mainWindow && !mainWindow.isDestroyed()) {
+  //         mainWindow.webContents.send(
+  //           "log-watch-error",
+  //           (error as Error).message
+  //         );
+  //       }
+  //     }
+  //   }, 500); // 每 500 毫秒检查一次
+  //
+  //   return { success: true, message: "轮询监听已启动" };
+  // });
+  //
+  // // --- 停止轮询监听 ---
+  // ipcMain.handle("stop-log-watch", async () => {
+  //   if (pollTimer) {
+  //     clearInterval(pollTimer);
+  //     pollTimer = null;
+  //     currentWatchPath = "";
+  //     console.log("⏹️ 轮询监听已停止");
+  //     return { success: true, message: "已停止监听" };
+  //   }
+  //   return { success: true, message: "未在监听" };
+  // });
 
   // --- 窗口控制 IPC (保持原样) ---
   ipcMain.handle("window-minimize", () => {

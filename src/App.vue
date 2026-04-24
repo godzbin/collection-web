@@ -3,8 +3,8 @@
     <!-- 左侧导航栏 -->
     <div class="sidebar">
       <div class="logo-container">
-        <div class="logo">
-          <img src="./assets/logo_w.png" alt="Logo"></img>
+        <div class="logo bg">
+          <img src="./assets/gh_logo.png" alt="Logo"></img>
         </div>
         <!-- <div class="app-name">0xa</div> -->
       </div>
@@ -123,7 +123,11 @@ body {
   height: 100vh;
   overflow: hidden;
 }
-
+.logo.bg {
+  padding: 5px;
+  background-color: #fff;
+  border-radius: 5px;
+}
 .title-bar {
   position: fixed;
   top: 0;
@@ -215,12 +219,12 @@ body {
 }
 
 .logo {
-  font-size: 2rem;
-  margin: 10px 0;
+  //font-size: 2rem;
+  margin: 5px 0;
 }
 .logo img {
   width: 60px;
-  height: 30px;
+  height: 20px;
 }
 .app-name {
   font-size: 1.2rem;
