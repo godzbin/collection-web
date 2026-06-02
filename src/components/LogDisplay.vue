@@ -247,7 +247,7 @@ const emit = defineEmits<{
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   gap: 12px;
 }

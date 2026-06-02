@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import EditTask from './components/EditTask.vue'
 import { xxlLogin } from '../api/xxlJob.ts'
@@ -14,17 +14,17 @@ import {
   startJob,
   stopJob
 } from "../api/dataManagement.ts";
+import dayjs from "dayjs";
 
 const loading = ref(false)
 const list = ref<TaskInfoRes[]>([])
 const total = ref(0)
 const xxlLoggedIn = ref(false)
 
-// 用于清理异步操作的标志
 let isUnmounted = false
 
 const queryForm = reactive<TaskInfoParams>({
-  jobGroup: '', // 执行器 ID，根据实际修改，默认为 5
+  jobGroup: '',
   jobDesc: '',
   start: 1,
   length: 10,
@@ -39,7 +39,6 @@ const pagination = reactive({
   draw: 1,
 })
 
-// XXL-Job 登录
 const handleXxlLogin = async () => {
   if (isUnmounted) return
 
@@ -49,13 +48,11 @@ const handleXxlLogin = async () => {
     await nextTick()
     if (!isUnmounted) {
       xxlLoggedIn.value = true
-      // ElMessage.success('XXL-Job 登录成功')
       init()
     }
   } catch (error: any) {
     if (!isUnmounted) {
       console.error('XXL-Job 登录失败:', error)
-      // ElMessage.error(error.message || 'XXL-Job 登录失败')
     }
   } finally {
     if (!isUnmounted) {
@@ -64,14 +61,12 @@ const handleXxlLogin = async () => {
   }
 }
 
-// 检查登录状态
 const checkXxlLoginStatus = () => {
   const cookie = getXxlToken()
   xxlLoggedIn.value = !!cookie
   return xxlLoggedIn.value
 }
 
-// 获取任务列表
 const getData = async () => {
   if (isUnmounted) return
 
@@ -85,8 +80,6 @@ const getData = async () => {
       executorHandler: queryForm.executorHandler,
       author: queryForm.author,
       triggerStatus: queryForm.triggerStatus || -1,
-//     jobGroup=5&triggerStatus=-1&jobDesc=&executorHandler=&author=&start=0&length=1
-
     })
     await nextTick()
     if (!isUnmounted) {
@@ -97,13 +90,10 @@ const getData = async () => {
     if (!isUnmounted) {
       console.error('获取任务列表失败:', error)
       if (error.response?.status === 401 || error.message?.includes('login')) {
-        // ElMessage.warning('XXL-Job 未登录，请先登录')
         checkXxlLoginStatus()
         if (!xxlLoggedIn.value && !isUnmounted) {
           await handleXxlLogin()
         }
-      } else {
-        // ElMessage.error('获取任务列表失败')
       }
     }
   } finally {
@@ -113,14 +103,12 @@ const getData = async () => {
   }
 }
 
-// 搜索
 const handleSearch = () => {
   pagination.start = 0
   pagination.draw = 1
   getData()
 }
 
-// 分页变化 - 每页条数
 const handleSizeChange = (val: number) => {
   pagination.length = val
   pagination.start = 0
@@ -128,19 +116,16 @@ const handleSizeChange = (val: number) => {
   getData()
 }
 
-// 分页变化 - 页码
 const handleCurrentChange = (val: number) => {
   pagination.start = (val - 1) * pagination.length
   pagination.draw = val
   getData()
 }
 
-// 计算当前页码
 const currentPage = computed(() => {
   return Math.floor(pagination.start / pagination.length) + 1
 })
 
-// 解析 CRON 表达式为自然语言（XXL-JOB 风格）
 const parseCronExpression = (cron: string): string => {
   if (!cron || cron.trim() === '') return ''
 
@@ -149,15 +134,12 @@ const parseCronExpression = (cron: string): string => {
 
   const [second, minute, hour, day, month, week] = parts
 
-  // 检查日和周是否有冲突
   const hasDay = day !== '?' && day !== '*'
   const hasWeek = week !== '?' && week !== '*'
 
   let descriptions: string[] = []
 
-  // 解析月
   if (month === '*') {
-    // 每月，省略不显示
   } else if (/^\d+$/.test(month)) {
     descriptions.push(`${month}月`)
   } else if (/^\d+\/\d+$/.test(month)) {
@@ -170,9 +152,7 @@ const parseCronExpression = (cron: string): string => {
     descriptions.push(`${month.replace(/,/g, ',')}月`)
   }
 
-  // 解析日或周
   if (hasDay && hasWeek) {
-    // 日和周不能同时指定，优先显示日
     if (day === 'L') {
       descriptions.push('每月最后一天')
     } else if (/^\d+$/.test(day)) {
@@ -260,9 +240,7 @@ const parseCronExpression = (cron: string): string => {
     }
   }
 
-  // 解析时
   if (hour === '*') {
-    // 每小时，省略
   } else if (/^\d+$/.test(hour)) {
     descriptions.push(`${hour}点`)
   } else if (/^\*\/\d+$/.test(hour)) {
@@ -278,9 +256,7 @@ const parseCronExpression = (cron: string): string => {
     descriptions.push(`${hour.replace(/,/g, ',')}点`)
   }
 
-  // 解析分
   if (minute === '*') {
-    // 每分钟，省略
   } else if (/^\d+$/.test(minute)) {
     descriptions.push(`${minute}分`)
   } else if (/^0\/\d+$/.test(minute) || /^\*\/\d+$/.test(minute)) {
@@ -296,9 +272,7 @@ const parseCronExpression = (cron: string): string => {
     descriptions.push(`${minute.replace(/,/g, ',')}分`)
   }
 
-  // 解析秒
   if (second === '*') {
-    // 每秒，省略
   } else if (/^\d+$/.test(second)) {
     descriptions.push(`${second}秒`)
   } else if (/^\d+\/\d+$/.test(second)) {
@@ -314,7 +288,6 @@ const parseCronExpression = (cron: string): string => {
   return descriptions.join(' ')
 }
 
-// 将调度类型转换为自然语言描述
 const getScheduleDescription = (row: any): string => {
   const typeMap: Record<string, string> = {
     'CRON': 'Cron定时',
@@ -335,6 +308,25 @@ const getScheduleDescription = (row: any): string => {
 
   return `${typeName}: ${row.scheduleConf}`
 }
+
+const getRunModeDescription = (row: any): string => {
+  const glueTypeMap: Record<string, string> = {
+    'BEAN': 'Java组件',
+    'SCRIPT': '脚本任务',
+    'GLUE_JAVA': 'Java代码',
+    'GLUE_SHELL': 'Shell脚本',
+    'GLUE_PYTHON': 'Python脚本',
+    'GLUE_PHP': 'PHP脚本',
+    'GLUE_NODEJS': 'Node.js脚本',
+    'GLUE_POWERSHELL': 'PowerShell脚本'
+  }
+
+  const glueTypeName = glueTypeMap[row.glueType] || row.glueType || '未知'
+  const handlerName = row.executorHandler || '未设置'
+
+  return `${glueTypeName}：触发目标 ${handlerName}`
+}
+
 const jobGroupList = ref<JobGroupRes[]>([])
 
 const init = async ()=> {
@@ -363,7 +355,6 @@ const handleSave = async (data: TaskInfoRes) => {
   getData()
 }
 
-// 启动/停止任务
 const handleToggleJob = async (row: TaskInfoRes) => {
   const isRunning = row.triggerStatus === 1
   const action = isRunning ? '停止' : '启动'
@@ -387,7 +378,6 @@ const handleToggleJob = async (row: TaskInfoRes) => {
       ElMessage.success('任务已启动')
     }
 
-    // 刷新列表
     getData()
   } catch (error: any) {
     if (error !== 'cancel') {
@@ -397,35 +387,148 @@ const handleToggleJob = async (row: TaskInfoRes) => {
   }
 }
 
-// 手动触发单个任务
+const showBatchTriggerDialog = ref(false)
+const batchTriggerTask = ref<TaskInfoRes | null>(null)
+const dateRange = ref<[string, string] | null>(null)
+const batchTriggerLoading = ref(false)
+const triggerPreviewList = ref<Array<{date: string, param: string, isRun: boolean}>>([])
+
 const handleTrigger = async (row: TaskInfoRes) => {
+  batchTriggerTask.value = row
+  dateRange.value = null
+  triggerPreviewList.value = []
+  showBatchTriggerDialog.value = true
+}
+
+const calculateTriggerPreview = () => {
+
+  if (!batchTriggerTask.value || !dateRange.value || !Array.isArray(dateRange.value) || dateRange.value.length !== 2) {
+    triggerPreviewList.value = []
+    return
+  }
+
+  const [startDateStr, endDateStr] = dateRange.value
+  const startDate = dayjs(startDateStr)
+  const endDate = dayjs(endDateStr)
+
+  let executorParam = batchTriggerTask.value.executorParam || ''
+  // let rollDay = 0
+  let paramObj = {}
+  //
+  if (executorParam) {
+    try {
+      paramObj = JSON.parse(executorParam)
+    } catch (e) {
+      console.warn('解析 executorParam 失败，使用默认 rollDay=1')
+    }
+  }
+
+
+  const today = dayjs()
+
+  const previewList: Array<{date: string, param: string, isRun: boolean}> = []
+
+  const count = dayjs(endDate).diff(startDate, 'day')
+
+
+  for (let i = 0; i <= count; i++) {
+    const date = startDate.add(i, 'day')
+    const rollDay = date.diff(today, 'day')
+    previewList.push({
+      date: date.format('YYYY-MM-DD'),
+      isRun: false,
+      param: JSON.stringify(Object.assign(paramObj, {
+        rollDay: rollDay
+      }))
+    })
+  }
+  triggerPreviewList.value = previewList
+}
+
+watch(dateRange, () => {
+  calculateTriggerPreview()
+})
+
+const confirmBatchTrigger = async () => {
+  if (!batchTriggerTask.value || !dateRange.value || !Array.isArray(dateRange.value) || dateRange.value.length !== 2) {
+    ElMessage.warning('请选择完整的日期范围')
+    return
+  }
+
+  if (triggerPreviewList.value.length === 0) {
+    ElMessage.warning('日期范围内没有需要触发的日期')
+    return
+  }
+
   try {
     await ElMessageBox.confirm(
-        `确定要手动触发任务 "${row.jobDesc}" 吗？`,
-        '手动触发',
+        `将触发 ${triggerPreviewList.value.length} 次，是否继续？`,
+        '确认触发',
         {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning',
         }
     )
+  } catch {
+    return
+  }
 
-    await triggerJob({
-      id: row.id!,
-      executorParam: row.executorParam || '',
-      addressList: ''
-    })
+  batchTriggerLoading.value = true
 
-    ElMessage.success('任务触发成功')
-  } catch (error: any) {
-    if (error !== 'cancel') {
-      console.error('手动触发任务失败:', error)
-      ElMessage.error(error.message || '任务触发失败')
+  const row = batchTriggerTask.value
+  let successCount = 0
+  let failCount = 0
+  const errors: string[] = []
+
+  for (const item of triggerPreviewList.value) {
+    try {
+      await triggerJob({
+        id: row.id!,
+        executorParam: item.param,
+        addressList: ''
+      })
+      successCount++
+      item.isRun = true
+    } catch (error: any) {
+      failCount++
+      errors.push(`日期 ${item.date}: ${error.message || '未知错误'}`)
     }
   }
+
+  batchTriggerLoading.value = false
+
+  let message = `批量触发完成！成功：${successCount}, 失败：${failCount}`
+  if (errors.length > 0 && errors.length <= 10) {
+    message += '\n\n失败详情:\n' + errors.join('\n')
+  } else if (errors.length > 10) {
+    message += '\n\n前10个失败详情:\n' + errors.slice(0, 10).join('\n') + '\n...'
+  }
+
+  if (failCount === 0) {
+    ElMessage.success(message)
+  } else {
+    ElMessage.warning(message)
+  }
+
+  getData()
+
+  await ElMessageBox.confirm(
+      `已触发 ${triggerPreviewList.value.length} 次，是否继续设置？`,
+      '确认触发',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+  ).then(() => {
+    triggerPreviewList.value = []
+    dateRange.value = null
+  }).catch(() => {
+    showBatchTriggerDialog.value = false
+  })
 }
 
-// 一键执行当前列表所有任务
 const handleTriggerAll = async () => {
   if (list.value.length === 0) {
     ElMessage.warning('当前列表没有任务')
@@ -448,7 +551,6 @@ const handleTriggerAll = async () => {
     let failCount = 0
     const errors: string[] = []
 
-    // 依次执行所有任务
     for (const task of list.value) {
       try {
         await triggerJob({
@@ -474,7 +576,6 @@ const handleTriggerAll = async () => {
       ElMessage.warning(message)
     }
 
-    // 刷新列表
     getData()
   } catch (error: any) {
     if (error !== 'cancel') {
@@ -493,15 +594,12 @@ onMounted(async () => {
   if (xxlLoggedIn.value) {
     init()
   } else {
-    // 自动尝试登录
     handleXxlLogin()
   }
 })
 
-// 组件卸载时清理
 onUnmounted(() => {
   isUnmounted = true
-  // 清理可能还在进行的异步操作
   loading.value = false
 })
 </script>
@@ -510,24 +608,8 @@ onUnmounted(() => {
   <div class="task-page">
     <div class="page-header">
       <h2 class="page-title">任务管理</h2>
-<!--      <div class="login-status">-->
-<!--        <el-tag :type="xxlLoggedIn ? 'success' : 'danger'">-->
-<!--          {{ xxlLoggedIn ? 'XXL-Job 已登录' : 'XXL-Job 未登录' }}-->
-<!--        </el-tag>-->
-<!--        <el-button-->
-<!--            v-if="!xxlLoggedIn"-->
-<!--            type="primary"-->
-<!--            size="small"-->
-<!--            @click="handleXxlLogin"-->
-<!--            :loading="loading"-->
-<!--            style="margin-left: 10px"-->
-<!--        >-->
-<!--          登录 XXL-Job-->
-<!--        </el-button>-->
-<!--      </div>-->
     </div>
 
-    <!-- 搜索栏 -->
     <el-card class="search-card">
       <el-form :inline="true" :model="queryForm" class="search-form" label-width="80px">
         <el-form-item label="执行器">
@@ -567,7 +649,6 @@ onUnmounted(() => {
       </el-form>
     </el-card>
 
-    <!-- 表格 -->
     <el-card class="table-card">
       <template #header>
         <div class="table-header">
@@ -600,10 +681,9 @@ onUnmounted(() => {
         </el-table-column>
         <el-table-column prop="executorRouteStrategy" label="运行模式" >
           <template #default="scope">
-            {{ scope.row.glueType }}：{{ scope.row.executorHandler}}
+            {{ getRunModeDescription(scope.row) }}
           </template>
         </el-table-column>
-        <el-table-column prop="author" label="负责人" width="100" />
         <el-table-column prop="triggerStatus" label="状态" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.triggerStatus === 1 ? 'success' : 'danger'">
@@ -633,14 +713,13 @@ onUnmounted(() => {
                   size="small"
                   @click="handleTrigger(scope.row)"
               >
-                执行一次
+                执行多次
               </el-button>
             </el-space>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
             v-model:current-page="currentPage"
@@ -659,13 +738,75 @@ onUnmounted(() => {
         :task-data="currentTask"
         @save="handleSave"
     />
+
+    <el-dialog
+        v-model="showBatchTriggerDialog"
+        title="批量触发任务"
+        width="700px"
+        :close-on-click-modal="false"
+    >
+      <div v-if="batchTriggerTask" style="padding: 20px 0">
+        <el-form label-width="100px">
+          <el-form-item label="任务描述">
+            <span>{{ batchTriggerTask.jobDesc }}</span>
+          </el-form-item>
+          <el-form-item label="日期范围">
+            <el-date-picker
+                v-model="dateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+            />
+          </el-form-item>
+        </el-form>
+
+        <div v-if="triggerPreviewList.length > 0" style="margin-top: 20px">
+          <div style="margin-bottom: 10px; font-weight: bold; color: #606266;">
+            触发预览 (共 {{ triggerPreviewList.length }} 次)：
+          </div>
+          <el-table
+              :data="triggerPreviewList"
+              border
+              max-height="400"
+              style="width: 100%"
+          >
+            <el-table-column prop="date" label="日期" width="150" align="center" />
+            <el-table-column label="执行参数">
+              <template #default="{ row }">
+                <el-tooltip :content="row.param" placement="top">
+                  <span style="word-break: break-all; font-size: 12px;">{{ row.param }}</span>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column prop="isRun" label="是否执行" width="80" align="center">
+              <template #default="{ row }">
+                <el-tag v-if="row.isRun" type="success">是</el-tag>
+                <el-tag v-else type="danger">否</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showBatchTriggerDialog = false">取消</el-button>
+        <el-button
+            type="primary"
+            @click="confirmBatchTrigger"
+            :disabled="triggerPreviewList.length === 0"
+            :loading="batchTriggerLoading"
+        >
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
 .task-page {
-  //padding: 20px;
-  //background-color: #f0f2f5;
   min-height: 100vh;
 }
 
@@ -681,12 +822,6 @@ onUnmounted(() => {
   font-size: 24px;
   font-weight: 600;
   color: #333;
-}
-
-.login-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .search-card {

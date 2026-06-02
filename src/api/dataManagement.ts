@@ -209,6 +209,7 @@ export function triggerJob(params: {
     executorParam?: string;
     addressList?: string;
 }): Promise<any> {
+    console.log(`/jobinfo/trigger`, params)
     return postByXXL(`/jobinfo/trigger`, params);
 }
 
