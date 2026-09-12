@@ -1,6 +1,7 @@
 // import axios from "axios";
 import { loadConfig } from "../utils/auth";
 import request from "../utils/xxlRequest";
+import { xxlJobLogin, xxlJobProxy, isTauri } from "./tauri";
 // import {xxlPassword, xxlUsername} from "../utils/xxlRequest";
 
 
@@ -16,9 +17,9 @@ export async function xxlLogin(): Promise<any> {
     console.log(`[XXL-Job] 登录: ${xxlBaseUrl}`, xxlUsername, xxlPassword);
     try {
       // 1. 优先使用 Electron IPC 方式
-      if (window.electronAPI && window.electronAPI.invoke) {
-        console.log("[XXL-Job] 使用 Electron 主进程代理登录");
-        const res =  await window.electronAPI.invoke("xxl-job-login", {
+      if (isTauri()) {
+        console.log("[XXL-Job] 使用 Tauri 主进程代理登录");
+        const res = await xxlJobLogin({
           baseUrl: xxlBaseUrl,
           userName: xxlUsername,
           password: xxlPassword,
@@ -55,12 +56,12 @@ export async function xxlLogin(): Promise<any> {
  */
 export const postByXXL = async <K>(url: string, data: object, retryCount = 0): Promise<K> => {
     // 1. 优先使用 Electron 代理
-    if (window.electronAPI && window.electronAPI.invoke) {
+    if (isTauri()) {
         try {
             console.log(`[XXL-Job Proxy] 请求: ${url} `, data);
             
             // 调用主进程代理
-            const result = await window.electronAPI.invoke("xxl-job-proxy", {
+            const result = await xxlJobProxy({
                 url: url,
                 method: "post",
                 data: data

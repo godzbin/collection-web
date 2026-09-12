@@ -43,6 +43,12 @@
           <!-- <span class="menu-text">配置管理</span> -->
         </router-link>
 
+        <router-link to="/ghPush" class="menu-item" active-class="active" title="港华推送记录">
+          <span class="menu-icon">
+            <el-icon :size="20"><Promotion /></el-icon>
+          </span>
+        </router-link>
+
         <router-link to="/about" class="menu-item" active-class="active">
           <span class="menu-icon">
             <svg t="1768288118824" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5570" width="200" height="200"><path d="M520.8 1013.6h-4.8c-61.6-0.8-121.6-12-178.4-34.4l12-29.6c52.8 20.8 109.6 32 167.2 32h4.8c251.2 0 461.6-203.2 469.6-454.4 4-131.2-44.8-254.4-137.6-347.2C760 87.2 636.8 38.4 505.6 42.4c-256 8-459.2 223.2-454.4 479.2 1.6 78.4 23.2 155.2 61.6 223.2l-28 16c-41.6-72-64-154.4-65.6-238.4C13.6 248.8 231.2 19.2 504 10.4c140-4.8 272 48 371.2 146.4C974.4 256 1026.4 388 1022.4 528c-8.8 268.8-233.6 485.6-501.6 485.6z" fill="#fff" p-id="5571"></path><path d="M543.2 375.2c-27.2 0-49.6-22.4-49.6-49.6 0-27.2 22.4-49.6 49.6-49.6 27.2 0 49.6 22.4 49.6 49.6 0 27.2-22.4 49.6-49.6 49.6zM512 747.2c-20 3.2-36.8-6.4-48-20-14.4-17.6-18.4-42.4-12.8-64L493.6 504c0-12-4-10.4-32.8-16-4-0.8-6.4-6.4-3.2-9.6 20-23.2 52-40 85.6-40 22.4 0 36 15.2 43.2 32.8 6.4 15.2 6.4 32.8 2.4 48l-38.4 144c-4.8 16.8 6.4 33.6 23.2 36.8 8.8 1.6 15.2 0.8 14.4 6.4-5.6 20-36.8 40.8-76 40.8z" fill="#fff" p-id="5572"></path><path d="M99.2 752.8m-16 0a16 16 0 1 0 32 0 16 16 0 1 0-32 0Z" fill="#fff" p-id="5573"></path><path d="M343.2 964.8m-16 0a16 16 0 1 0 32 0 16 16 0 1 0-32 0Z" fill="#fff" p-id="5574"></path><path d="M280 920m-16 0a16 16 0 1 0 32 0 16 16 0 1 0-32 0Z" fill="#fff" p-id="5575"></path></svg>
@@ -83,7 +89,7 @@
 
 <script setup lang="ts">
 import { RouterLink, RouterView, useRouter} from "vue-router";
-import {DocumentChecked} from '@element-plus/icons-vue'
+import {DocumentChecked, Promotion} from '@element-plus/icons-vue'
 import {ElMessageBox} from "element-plus";
 const router = useRouter();
 

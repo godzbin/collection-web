@@ -1,4 +1,6 @@
 import { getToken, removeLocalInfo, loadConfig } from "./auth";
+import { isTauri } from "../api/tauri";
+import { tauriHttpAdapter } from "./tauriHttpAdapter";
 import router from "../router/index";
 import axios, {
   AxiosInstance,
@@ -16,6 +18,10 @@ import { ElMessage } from "element-plus";
 const service: AxiosInstance = axios.create({
   // baseURL: import.meta.env.DEV  ? '/api' : '',
   timeout: 60000,
+  // Tauri 生产态走 Rust 侧转发，规避 CORS；DEV 态走 vite 代理
+  ...(isTauri() && !import.meta.env.DEV
+    ? { adapter: tauriHttpAdapter }
+    : {}),
 });
 
 service.interceptors.request.use(

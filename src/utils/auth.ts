@@ -1,3 +1,5 @@
+import { getConfig, isTauri } from "../api/tauri";
+
 // export const beianhao = "guoruixinneng.com 粤ICP备2022118025号-2";
 
 export const tokenLocalName = "token";
@@ -20,8 +22,8 @@ export const removeLocalInfo = () => {
 export const loadConfig = async () => {
     let config: any = null
   try {
-    if (window.electronAPI) {
-      const result = await window.electronAPI.getConfig()
+    if (isTauri()) {
+      const result = await getConfig()
       if (result.success) {
         config = result.data
         console.log('✅ 配置加载成功:', config)

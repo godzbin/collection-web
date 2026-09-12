@@ -117,6 +117,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { getConfig, saveConfig, resetConfig, isTauri } from '../api/tauri'
 
 
 interface ConfigType {
@@ -142,8 +143,8 @@ const loading = ref(false)
 // 加载配置
 const loadConfig = async () => {
   try {
-    if (window.electronAPI) {
-      const result = await window.electronAPI.getConfig()
+    if (isTauri()) {
+      const result = await getConfig()
       if (result.success) {
         // 合并默认值，防止旧配置缺少新字段
         config.value = {
@@ -222,8 +223,8 @@ const handleSave = async () => {
   loading.value = true
 
   try {
-    if (window.electronAPI) {
-      // Electron 环境，保存到文件
+    if (isTauri()) {
+      // Tauri 环境，保存到文件
       const configToSave = {
         serviceUrl: config.value.serviceUrl,
         xxlJobUrl: config.value.xxlJobUrl,
@@ -232,7 +233,7 @@ const handleSave = async () => {
         xxlPassword: config.value.xxlPassword
       }
 
-      const result = await window.electronAPI.saveConfig(configToSave)
+      const result = await saveConfig(configToSave)
       if (result.success) {
         ElMessage.success('配置已保存')
         // 保存后刷新页面使配置生效
@@ -262,8 +263,8 @@ const handleSave = async () => {
 // 重置配置
 const handleReset = async () => {
   try {
-    if (window.electronAPI) {
-      const result = await window.electronAPI.resetConfig()
+    if (isTauri()) {
+      const result = await resetConfig()
       if (result.success) {
         config.value = {
           ...config.value,

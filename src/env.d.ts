@@ -10,31 +10,6 @@ declare module '*.vue' {
     export default component;
 }
 
-interface Window {
-    electronAPI?: {
-        ipcRenderer: {
-            invoke: (channel: string, ...args: any[]) => Promise<any>;
-            on: (channel: string, callback: (...args: any[]) => void) => void;
-            removeListener: (channel: string, callback: (...args: any[]) => void) => void;
-        };
-        minimize: () => Promise<void>;
-        maximize: () => Promise<void>;
-        close: () => Promise<void>;
-        readLog: (filePath: string) => Promise<any>;
-        startLogWatch: (filePath: string) => Promise<any>;
-        stopLogWatch: () => Promise<any>;
-        selectFile: (options?: any) => Promise<{ success: boolean; filePath?: string; fileName?: string; canceled?: boolean; error?: string }>;
-        onLogFileChanged: (callback: (newData: string) => void) => void;
-        offLogFileChanged: () => void;
-        onLogWatchError: (callback: (error: string) => void) => void;
-        offLogWatchError: () => void;
-        getConfig: () => Promise<{ success: boolean; data: any; message?: string }>;
-        saveConfig: (config: { serviceUrl: string; xxlJobUrl: string; logFilePath: string }) => Promise<{ success: boolean; message: string }>;
-        resetConfig: () => Promise<{ success: boolean; message: string; data: any }>;
-        invoke:(channel: string, ...args: any[]) => Promise<any>;
-    };
-}
-
 // src/types/shims-vue.d.ts (或者你的全局声明文件)
 declare module 'vue3-cron' {
     import { DefineComponent } from 'vue'

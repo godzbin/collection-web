@@ -57,7 +57,7 @@ const handleSave = async () => {
           ...cur
         })
       }
-      cur.children.map((item: any) => {
+      cur.children?.forEach((item: any) => {
         if (item.importUri) {
           acc.push({
             ...item

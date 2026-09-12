@@ -45,6 +45,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/Setting.vue"), // 懒加载
   },
   {
+    path: "/ghPush",
+    name: "GhPush",
+    component: () => import("../views/GhPush.vue"), // 懒加载
+  },
+  {
     path: "/about",
     name: "About",
     component: () => import("../views/About.vue"), // 动态导入

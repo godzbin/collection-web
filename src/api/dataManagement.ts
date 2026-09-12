@@ -240,3 +240,93 @@ export const getDayLoadConfigList = (): Promise<any[]> => {
 export const saveDayLoadConfig = (data: any): Promise<any> => {
     return post("/pubtask/batch/update", data);
 }
+
+// ==================== 【港华】推送记录 ====================
+
+/**
+ * 推送元数据
+ */
+export interface GhPushMeta {
+    id?: number;
+    /* uuid */
+    assetUuid?: string;
+    /* 模型名称 */
+    modelName?: string;
+    /* 模型英文名（表名） */
+    tableName?: string;
+    /* 省份 */
+    province?: string;
+    createTime?: string | number;
+    modifyTime?: string | number;
+}
+
+/**
+ * 推送元数据枚举（GET /pub/gh/pushmeta/list）
+ * 相比 GhPushMeta 多出 enumName，用于清理缓存接口的 tableMeta
+ */
+export interface GhPushMetaEnum {
+    modelName?: string;
+    tableName?: string;
+    province?: string;
+    assetUuid?: string;
+    enumName?: string;
+}
+
+/**
+ * 数据推送记录
+ */
+export interface GhPushHi {
+    id?: number;
+    /* 元数据ID（gh_push_meta） */
+    pushMetaId?: number;
+    /* json数据类型：推送参数，Records[].day 为业务日期 */
+    requestParam?: { Records?: Array<{ day?: string; data?: string }> } & Record<string, any>;
+    /* json数据类型：响应参数 */
+    responseBody?: Record<string, any>;
+    /* 推送是否成功：1 成功，0 失败 */
+    status?: number | string;
+    /* 推送失败原因 */
+    errorMsg?: string;
+    /* 创建时间（数据推送时间） */
+    createTime?: string | number;
+    modifyTime?: string | number;
+    pageSize?: number;
+    page?: number;
+}
+
+export interface GhPushHiPageRes {
+    total?: number;
+    totalPage?: number;
+    data?: GhPushHi[];
+}
+
+/**
+ * 列表查询（推送元数据）
+ */
+export function getGhPushMetaList(params?: GhPushMeta): Promise<GhPushMeta[]> {
+    return post(`/ghpushmeta/list`, params ?? {});
+}
+
+/**
+ * 获取港华推送表元数据枚举列表（注意：该接口为 GET）
+ */
+export function getGhPushMetaEnumList(): Promise<GhPushMetaEnum[]> {
+    return get(`/pub/gh/pushmeta/list`);
+}
+
+/**
+ * 分页查询（数据推送记录）
+ * 注意：服务端对成功记录较多的情况会报 "Out of sort memory"，调用方需容错处理
+ */
+export function getGhPushHiPage(params: GhPushHi): Promise<GhPushHiPageRes> {
+    return post(`/ghpushhi/page`, params);
+}
+
+/**
+ * 清理港华重复推送缓存
+ * @param tableMeta 推送表元数据枚举（enumName）
+ * @param day 业务日期，格式 YYYY-MM-DD
+ */
+export function clearGhPushCache(tableMeta: string, day: string): Promise<number> {
+    return post(`/pub/gh/pushcache/clear`, { tableMeta, day });
+}
