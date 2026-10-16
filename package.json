@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:0xa": "vite --mode zeroxa --host",
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri"

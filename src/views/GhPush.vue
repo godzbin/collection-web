@@ -483,4 +483,41 @@ onMounted(async () => {
 :deep(.el-table th) {
   font-weight: 600;
 }
+
+/* ========== H5 适配 ========== */
+@media (max-width: 768px) {
+  .gh-push-page {
+    min-height: 100%;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .search-form :deep(.el-form-item) {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .search-form :deep(.el-select),
+  .search-form :deep(.el-input),
+  .search-form :deep(.el-date-editor) {
+    width: 100% !important;
+  }
+
+  .table-card :deep(.el-table) {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .pagination-container {
+    justify-content: center;
+  }
+
+  .pagination-container :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+  }
+}
 </style>

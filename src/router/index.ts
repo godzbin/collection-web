@@ -50,6 +50,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/GhPush.vue"), // 懒加载
   },
   {
+    path: "/excelImport",
+    name: "ExcelImport",
+    component: () => import("../views/ExcelImport.vue"), // 懒加载
+  },
+  {
     path: "/about",
     name: "About",
     component: () => import("../views/About.vue"), // 动态导入

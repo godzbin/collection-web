@@ -18,27 +18,36 @@ export const removeLocalInfo = () => {
     localStorage.removeItem(userInfoLocalName);
 };
 
-// 加载配置
+// 系统配置默认值（来自 env：VITE_SERVICE_URL / VITE_XXL_JOB_URL / VITE_XXL_USERNAME / VITE_XXL_PASSWORD）
+export const getDefaultConfig = () => ({
+  serviceUrl: import.meta.env.VITE_SERVICE_URL || "",
+  xxlJobUrl: import.meta.env.VITE_XXL_JOB_URL || "",
+  logFilePath: import.meta.env.VITE_LOG_FILE_PATH || "",
+  xxlUsername: import.meta.env.VITE_XXL_USERNAME || "",
+  xxlPassword: import.meta.env.VITE_XXL_PASSWORD || "",
+});
+
+// 加载配置（未保存过时回退 env 默认值）
 export const loadConfig = async () => {
     let config: any = null
   try {
     if (isTauri()) {
       const result = await getConfig()
       if (result.success) {
-        config = result.data
+        config = { ...getDefaultConfig(), ...result.data }
         console.log('✅ 配置加载成功:', config)
       } else {
         console.error('❌ 配置加载失败')
       }
     } else {
-      // 非 Electron 环境，使用 localStorage
+      // 非 Electron 环境，使用 localStorage，缺省时回退 env 默认值
       const saved = localStorage.getItem('systemConfig')
-      if (saved) {
-        config = JSON.parse(saved)
-      }
+      config = saved
+        ? { ...getDefaultConfig(), ...JSON.parse(saved) }
+        : getDefaultConfig()
     }
   } catch (error) {
-    console.error('加载配置时出错:', error)
+      console.error('加载配置时出错:', error)
     }
     return config
 }

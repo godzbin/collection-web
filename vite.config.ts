@@ -5,6 +5,8 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
     // Tauri 需要固定端口并清理屏幕，避免与 Rust 侧 devUrl 不一致
     clearScreen: false,
+    // env 文件位于 src 目录
+    envDir: 'src',
     plugins: [
         vue(),
     ],

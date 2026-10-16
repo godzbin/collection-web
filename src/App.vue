@@ -4,7 +4,7 @@
     <div class="sidebar">
       <div class="logo-container">
         <div class="logo bg">
-          <img src="./assets/gh_logo.png" alt="Logo"></img>
+          <img :src="logoUrl" alt="Logo"></img>
         </div>
         <!-- <div class="app-name">0xa</div> -->
       </div>
@@ -49,12 +49,28 @@
           </span>
         </router-link>
 
+        <router-link to="/excelImport" class="menu-item" active-class="active" title="Excel导入">
+          <span class="menu-icon">
+            <el-icon :size="20"><UploadFilled /></el-icon>
+          </span>
+        </router-link>
+
         <router-link to="/about" class="menu-item" active-class="active">
           <span class="menu-icon">
             <svg t="1768288118824" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5570" width="200" height="200"><path d="M520.8 1013.6h-4.8c-61.6-0.8-121.6-12-178.4-34.4l12-29.6c52.8 20.8 109.6 32 167.2 32h4.8c251.2 0 461.6-203.2 469.6-454.4 4-131.2-44.8-254.4-137.6-347.2C760 87.2 636.8 38.4 505.6 42.4c-256 8-459.2 223.2-454.4 479.2 1.6 78.4 23.2 155.2 61.6 223.2l-28 16c-41.6-72-64-154.4-65.6-238.4C13.6 248.8 231.2 19.2 504 10.4c140-4.8 272 48 371.2 146.4C974.4 256 1026.4 388 1022.4 528c-8.8 268.8-233.6 485.6-501.6 485.6z" fill="#fff" p-id="5571"></path><path d="M543.2 375.2c-27.2 0-49.6-22.4-49.6-49.6 0-27.2 22.4-49.6 49.6-49.6 27.2 0 49.6 22.4 49.6 49.6 0 27.2-22.4 49.6-49.6 49.6zM512 747.2c-20 3.2-36.8-6.4-48-20-14.4-17.6-18.4-42.4-12.8-64L493.6 504c0-12-4-10.4-32.8-16-4-0.8-6.4-6.4-3.2-9.6 20-23.2 52-40 85.6-40 22.4 0 36 15.2 43.2 32.8 6.4 15.2 6.4 32.8 2.4 48l-38.4 144c-4.8 16.8 6.4 33.6 23.2 36.8 8.8 1.6 15.2 0.8 14.4 6.4-5.6 20-36.8 40.8-76 40.8z" fill="#fff" p-id="5572"></path><path d="M99.2 752.8m-16 0a16 16 0 1 0 32 0 16 16 0 1 0-32 0Z" fill="#fff" p-id="5573"></path><path d="M343.2 964.8m-16 0a16 16 0 1 0 32 0 16 16 0 1 0-32 0Z" fill="#fff" p-id="5574"></path><path d="M280 920m-16 0a16 16 0 1 0 32 0 16 16 0 1 0-32 0Z" fill="#fff" p-id="5575"></path></svg>
           </span>
           <!-- <span class="menu-text">关于我们</span> -->
         </router-link>
+
+        <!-- H5 退出入口（桌面端由底部退出按钮承担） -->
+        <div class="menu-item logout-menu-item" @click="handleLogout" title="退出登录">
+          <span class="menu-icon">
+            <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+              <path d="M170.666667 853.333333V170.666667h256V85.333333H128A42.666667 42.666667 0 0 0 85.333333 128v768a42.666667 42.666667 0 0 0 42.666667 42.666667h298.666667v-85.333334H170.666667z" fill="#fff"/>
+              <path d="M810.666667 512L640 341.333333l60.330667-60.330666L917.333333 498.005333 700.330667 714.666667l-60.330667-60.330667L810.666667 483.669333H426.666667V398.336h384z" fill="#fff"/>
+            </svg>
+          </span>
+        </div>
       </div>
       <!-- ✅ 新增：底部退出按钮 -->
       <div class="sidebar-footer">
@@ -89,9 +105,12 @@
 
 <script setup lang="ts">
 import { RouterLink, RouterView, useRouter} from "vue-router";
-import {DocumentChecked, Promotion} from '@element-plus/icons-vue'
+import {DocumentChecked, Promotion, UploadFilled} from '@element-plus/icons-vue'
 import {ElMessageBox} from "element-plus";
 const router = useRouter();
+
+// 侧边栏 logo 从 env 读取，默认 public 目录下的 gh_logo.png
+const logoUrl = import.meta.env.VITE_LOGO_URL || "/gh_logo.png";
 
 
 // ✅ 新增：退出登录处理
@@ -207,7 +226,7 @@ body {
   background-color: #1e293b;
   color: white;
   /* padding: 20px 0; */
-  //border-right: 1px solid #334155;
+  /* border-right: 1px solid #334155; */
 }
 
 .sidebar-footer {
@@ -225,7 +244,7 @@ body {
 }
 
 .logo {
-  //font-size: 2rem;
+  /* font-size: 2rem; */
   margin: 5px 0;
 }
 .logo img {
@@ -235,6 +254,65 @@ body {
 .app-name {
   font-size: 1.2rem;
   font-weight: 500;
+}
+
+/* ========== H5 适配（<=768px）：侧边栏转为底部导航 ========== */
+@media (max-width: 768px) {
+  #app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    order: 2;
+    width: 100%;
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    border-right: none;
+    border-top: 1px solid #334155;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 小屏隐藏 logo 与左栏底部退出按钮，退出使用菜单尾部入口 */
+  .logo-container,
+  .sidebar-footer {
+    display: none;
+  }
+
+  .menu {
+    display: flex;
+    flex: none;
+    padding: 0 8px;
+    gap: 4px;
+  }
+
+  .menu-item {
+    flex: none;
+    min-width: 48px;
+    padding: 8px 10px;
+    margin-bottom: 0;
+  }
+
+  .menu-icon {
+    margin: 0;
+  }
+
+  .content-area {
+    order: 1;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    padding: 12px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+}
+
+/* 桌面端隐藏菜单内退出入口（H5 才显示） */
+@media (min-width: 769px) {
+  .logout-menu-item {
+    display: none;
+  }
 }
 
 .menu {

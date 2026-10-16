@@ -861,4 +861,42 @@ onUnmounted(() => {
 :deep(.el-button--small) {
   padding: 5px 10px;
 }
+
+/* ========== H5 适配 ========== */
+@media (max-width: 768px) {
+  .task-page {
+    min-height: 100%;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  /* 搜索表单项纵向铺满 */
+  .search-form :deep(.el-form-item) {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .search-form :deep(.el-select),
+  .search-form :deep(.el-input) {
+    width: 100% !important;
+  }
+
+  /* 表格横向滚动 */
+  .table-card :deep(.el-table) {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .pagination-container {
+    justify-content: center;
+  }
+
+  .pagination-container :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+  }
+}
 </style>

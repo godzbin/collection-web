@@ -11,9 +11,13 @@ import { xxlJobLogin, xxlJobProxy, isTauri } from "./tauri";
  */
 export async function xxlLogin(): Promise<any> {
     const config = await loadConfig()
-    const xxlBaseUrl = config?.xxlJobUrl ?? "";
+    let xxlBaseUrl = config?.xxlJobUrl ?? "";
     const xxlUsername = config?.xxlUsername ?? "";
     const xxlPassword = config?.xxlPassword ?? "";
+    // DEV 浏览器环境下把绝对地址转为相对路径，走 vite 代理避免 CORS
+    if (import.meta.env.DEV && xxlBaseUrl) {
+        try { xxlBaseUrl = new URL(xxlBaseUrl).pathname.replace(/\/+$/, ""); } catch { /* 地址非法时保持原值 */ }
+    }
     console.log(`[XXL-Job] 登录: ${xxlBaseUrl}`, xxlUsername, xxlPassword);
     try {
       // 1. 优先使用 Electron IPC 方式
@@ -28,28 +32,30 @@ export async function xxlLogin(): Promise<any> {
         return res;
       }
 
-      // 2. 非 Electron 环境或降级方案 (可能仍受浏览器策略限制)
-      console.warn("[XXL-Job] 非 Electron 环境，尝试直接请求 (可能失败)");
-      const loginConfig: any = {
-        url: "/auth/doLogin",
-        method: "post",
-        data: new URLSearchParams({
-          userName: xxlUsername,
-          password: xxlPassword,
-        }),
-        baseURL: xxlBaseUrl,
-        withCredentials: true,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      };
-      return await request(loginConfig);
+    // 2. 非 Electron 环境降级：DEV 下走 vite 代理（/xxl-job-admin），生产浏览器直连
+    else {
+        const proxyBase = import.meta.env.DEV ? "/xxl-job-admin" : "";
+        console.warn(`[XXL-Job] 非 Electron 环境，${proxyBase ? "走 vite 代理" : "直接请求"}`);
+        const loginConfig: any = {
+            url: `${proxyBase}/auth/doLogin`,
+            method: "post",
+            data: new URLSearchParams({
+                userName: xxlUsername,
+                password: xxlPassword,
+            }),
+            withCredentials: true,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        };
+        return await request(loginConfig);
+    }
     } catch (error) {
       console.error("XXL-Job 登录失败:", error);
       throw error;
     }
-}
+};
 /**
  * XXL-Job 专用 post 请求
  * 采用主进程代理模式，彻底解决 CORS 和 Cookie 问题
@@ -115,10 +121,40 @@ export const postByXXL = async <K>(url: string, data: object, retryCount = 0): P
         }
     } 
     
-    // 2. 非 Electron 环境降级（如果需要支持浏览器直连，需保留原有 request 逻辑，但会有 CORS 风险）
+    // 2. 非 Electron 环境降级：DEV 下走 vite 代理（url 前缀 /xxl-job-admin），浏览器同源无 CORS
     else {
-        console.warn("[XXL-Job] 非 Electron 环境，代理不可用");
-        throw new Error("XXL-Job proxy not available");
+        if (!import.meta.env.DEV) {
+            console.warn("[XXL-Job] 非 Electron 生产环境，代理不可用");
+            throw new Error("XXL-Job proxy not available");
+        }
+        try {
+            const proxyUrl = url.startsWith("/xxl-job-admin") ? url : `/xxl-job-admin${url.startsWith("/") ? "" : "/"}${url}`;
+            // XXL-Job 后端要求表单参数，axios 默认会序列化为 JSON，这里显式转 URLSearchParams
+            const formData = new URLSearchParams();
+            Object.entries(data as Record<string, unknown>).forEach(([k, v]) => {
+                formData.append(k, v === null || v === undefined ? "" : String(v));
+            });
+            return await request<K>({
+                url: proxyUrl,
+                method: "post",
+                data: formData,
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                withCredentials: true,
+            });
+        } catch (error: any) {
+            const isAuthError =
+                error.response?.status === 401 ||
+                (error.response?.data?.code && error.response.data.code !== 200);
+            if (isAuthError && retryCount < 10) {
+                console.log(`[XXL-Job] 认证失效，尝试重新登录... (重试: ${retryCount + 1})`);
+                await xxlLogin();
+                return postByXXL(url, data, retryCount + 1);
+            }
+            throw error;
+        }
     }
 };
 

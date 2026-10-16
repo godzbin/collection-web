@@ -126,6 +126,19 @@ const handleLogin = async () => {
   width: 400px;
 }
 
+/* ========== H5 适配 ========== */
+@media (max-width: 768px) {
+  .login-container {
+    height: 100dvh;
+    padding: 16px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 400px;
+  }
+}
+
 .card-header {
   text-align: center;
   font-size: 18px;

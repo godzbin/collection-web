@@ -128,6 +128,15 @@ interface ConfigType {
   xxlPassword: string // 新增
 }
 
+// 配置默认值（来自 env，VITE_* 变量）
+const defaultConfig: ConfigType = {
+  serviceUrl: import.meta.env.VITE_SERVICE_URL || '',
+  xxlJobUrl: import.meta.env.VITE_XXL_JOB_URL || '',
+  logFilePath: import.meta.env.VITE_LOG_FILE_PATH || '',
+  xxlUsername: import.meta.env.VITE_XXL_USERNAME || '',
+  xxlPassword: import.meta.env.VITE_XXL_PASSWORD || ''
+}
+
 // 配置数据
 const config = ref<ConfigType>({
   serviceUrl: '',
@@ -276,13 +285,7 @@ const handleReset = async () => {
       }
     } else {
       localStorage.removeItem('systemConfig')
-      config.value = {
-        serviceUrl: 'http://192.168.1.169:9980/',
-        xxlJobUrl: 'http://192.168.1.18:38080/xxl-job-admin',
-        logFilePath: '',
-        xxlUsername: 'admin',
-        xxlPassword: 'guorui@2026' // 重置为默认密码
-      }
+      config.value = { ...defaultConfig }
       ElMessage.success('已重置为默认配置')
     }
   } catch (error) {

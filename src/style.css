@@ -69,6 +69,51 @@ a {
   text-decoration: none;
 }
 
+/* ========== H5 适配 ========== */
+@media (max-width: 768px) {
+  /* 弹窗宽度自适应小屏 */
+  .el-dialog {
+    --el-dialog-width: 92vw !important;
+    width: 92vw !important;
+    margin: 8vh auto !important;
+  }
+
+  /* 弹窗确认框 */
+  .el-message-box {
+    width: 88vw !important;
+    max-width: 88vw;
+  }
+
+  /* 表格启用横向滚动提示（配合各页面 max-content 宽度） */
+  .el-table {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 触控目标可点击性 */
+  .el-button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 消息提示不超出屏幕 */
+  .el-message {
+    max-width: 92vw;
+    min-width: 0;
+  }
+
+  /* 页面容器不再撑满整屏，避免底部导航被挤出视口 */
+  .setting-page,
+  .task-page,
+  .gh-push-page,
+  .excel-import-page,
+  .about-page,
+  .cockpit-page,
+  .log-page,
+  .home-page {
+    min-height: 100% !important;
+    height: auto !important;
+  }
+}
+
 .content-box {
   /*position: absolute;*/
   /*left: 250px;*/
