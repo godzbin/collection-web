@@ -424,7 +424,7 @@ const calculateTriggerPreview = () => {
   }
 
 
-  const today = dayjs()
+  const today = dayjs().startOf('day')
 
   const previewList: Array<{date: string, param: string, isRun: boolean}> = []
 
@@ -514,12 +514,12 @@ const confirmBatchTrigger = async () => {
   getData()
 
   await ElMessageBox.confirm(
-      `已触发 ${triggerPreviewList.value.length} 次，是否继续设置？`,
-      '确认触发',
+      `已成功提交触发 ${triggerPreviewList.value.length} 次任务`,
+      '触发结果',
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning',
+        type: 'success',
       }
   ).then(() => {
     triggerPreviewList.value = []
