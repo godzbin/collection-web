@@ -2,7 +2,7 @@
   <div class="excel-import-page">
     <div class="page-header">
       <h2 class="page-title">Excel 导入</h2>
-      <span class="page-subtitle">港华相关数据 Excel 手动导入</span>
+      <span class="page-subtitle">相关数据 Excel 手动导入</span>
     </div>
 
     <el-row :gutter="20">
@@ -358,6 +358,11 @@ const handleImport = async () => {
     font-size: 18px;
   }
 
+  .page-header {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
   .excel-import-page :deep(.el-form-item__label) {
     word-break: break-all;
   }
@@ -369,6 +374,17 @@ const handleImport = async () => {
 
   .history-list {
     max-height: 50vh;
+  }
+
+  /* 历史记录条目纵向排列 */
+  .history-item .history-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  :deep(.el-dialog) {
+    width: 94% !important;
   }
 }
 

@@ -1,7 +1,7 @@
 <template>
   <div class="cockpit-container">
-    <div class="header">
-      <h1>数据驾驶舱</h1>
+    <div class="page-header">
+      <h2 class="page-title">数据驾驶舱</h2>
       <div class="date-selector">
         <!-- 新增：负荷类型选择器 -->
         <el-select
@@ -385,20 +385,17 @@ onMounted(() => {
   min-height: 100vh;
 }
 
-.header {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  background: white;
-  padding: 16px 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
-.header h1 {
+.page-title {
   margin: 0;
   font-size: 24px;
+  font-weight: 600;
   color: #333;
 }
 
@@ -423,5 +420,40 @@ onMounted(() => {
   align-items: center;
   font-weight: bold;
   font-size: 16px;
+}
+
+/* ========== H5 适配 ========== */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 18px;
+  }
+
+  /* 头部筛选换行排列 */
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .date-selector {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .date-selector :deep(.el-select),
+  .date-selector :deep(.el-date-editor) {
+    width: 100% !important;
+    margin-right: 0 !important;
+  }
+
+  /* 图表单列 */
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chart-card {
+    min-height: 300px;
+  }
 }
 </style>

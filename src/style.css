@@ -8,27 +8,29 @@ a, abbr, acronym, address, big, cite, code, ul, ol, li, dl, dt, dd {
 }
 
 body {
-  --el-text-color-regular: #14344d;
-  --el-border-color-lighter: #e0e0e0;
-  --el-color-primary: #2794ee;
-  --el-color-warning: #faab58;
-  --el-color-primary-light-3: #389aea;
-  --el-color-primary-light-5: #61a8e3;
-  --el-color-primary-light-7: #8bc0ec;
-  --el-color-primary-light-8: #a8ceee;
-  --el-color-primary-light-9: #e5f1fc;
-  --el-color-primary-dark-2: #2e83d9;
+  --el-text-color-regular: #2c3446;
+  --el-border-color-lighter: #e5e9f0;
+  --el-color-primary: #3b62d6;
+  --el-color-success: #16a34a;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #ef4444;
+  --el-color-primary-light-3: #5c7de0;
+  --el-color-primary-light-5: #86a0ea;
+  --el-color-primary-light-7: #b0c3f2;
+  --el-color-primary-light-8: #c7d5f6;
+  --el-color-primary-light-9: #eaf0fc;
+  --el-color-primary-dark-2: #2f4fb0;
   /*--el-menu-active-color: #356ed9;*/
-  --el-border-radius-base: 5px;
+  --el-border-radius-base: 8px;
   --el-button-bg-color: rgba(255, 255, 255, 0.7);
   --el-fill-color-blank: rgba(255, 255, 255, 1);
   --el-bg-color: rgba(255, 255, 255, 0.95);
-  --el-menu-text-color: #dee9f3;
-  --el-menu-active-color: #dee9f3;
+  --el-menu-text-color: #d5dced;
+  --el-menu-active-color: #ffffff;
   --el-menu-bg-color: var(--el-color-primary-dark-2);
   --el-menu-hover-bg-color: var(--el-color-primary);
   --el-input-icon-color: var(--el-text-color-regular);
-  --el-text-color-placeholder: #5e6b77;
+  --el-text-color-placeholder: #6b7280;
   font-size: 14px;
 }
 
@@ -71,8 +73,8 @@ a {
 
 /* ========== H5 适配 ========== */
 @media (max-width: 768px) {
-  /* 弹窗宽度自适应小屏 */
-  .el-dialog {
+  /* 弹窗宽度自适应小屏（全屏弹窗除外） */
+  .el-dialog:not(.el-dialog--fullscreen) {
     --el-dialog-width: 92vw !important;
     width: 92vw !important;
     margin: 8vh auto !important;
@@ -98,6 +100,45 @@ a {
   .el-message {
     max-width: 92vw;
     min-width: 0;
+  }
+
+  /* 日期选择器弹层适配小屏（teleport 到 body，需全局样式） */
+  .el-picker__popper {
+    max-width: 94vw !important;
+    overflow-x: auto;
+  }
+
+  /* 单日期面板：宽度自适应内容 */
+  .el-date-picker {
+    width: auto !important;
+    max-width: 94vw !important;
+  }
+
+  /* 日期范围面板（桌面/平板使用）：不强制压缩宽度，避免日历变形，
+     超出部分横向滚动；页面内移动端已改用两个单日期选择器 */
+  .el-date-range-picker {
+    max-width: 94vw !important;
+  }
+
+  /* 日期表格单元尺寸压缩，节省空间 */
+  .el-date-table td {
+    padding: 2px 0 !important;
+  }
+
+  .el-date-table td .el-date-table-cell {
+    padding: 4px 0 !important;
+    height: 28px !important;
+  }
+
+  .el-date-table th {
+    padding: 4px 0 !important;
+  }
+
+  /* 面板底部按钮换行 */
+  .el-picker-panel__footer {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px !important;
   }
 
   /* 页面容器不再撑满整屏，避免底部导航被挤出视口 */
@@ -126,10 +167,10 @@ a {
   /*overflow: auto;*/
   background: linear-gradient(
           to right bottom,
-          var(--el-menu-text-color),
-          var(--el-menu-text-color),
-          var(--el-color-primary-light-9),
-          var(--el-color-primary-light-9)
+          #f4f6fa,
+          #f4f6fa,
+          #eef1f8,
+          #eef1f8
   );
 }
 
@@ -246,9 +287,9 @@ a {
 }
 
 .el-dialog {
-  border-radius: 5px 5px 5px 5px !important;
+  border-radius: 12px !important;
   padding: 15px !important;
-  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 20px 50px rgba(47, 79, 176, 0.15), 0 4px 14px rgba(15, 23, 42, 0.08) !important;
 }
 
 .fullscreen-dialog.el-dialog {
@@ -258,7 +299,7 @@ a {
 }
 
 .el-dialog__header {
-  border-bottom: 1px #ddd solid;
+  border-bottom: 1px solid #e5e9f0;
   margin-bottom: 10px;
   font-weight: 600;
 }
@@ -268,20 +309,21 @@ a {
 }
 
 .el-button {
-  border-radius: 8px 2px 8px 2px !important;
+  border-radius: 8px !important;
 }
 
 .el-table {
   /* --el-table-border-color: var(--el-border-color) !important; */
-  border-radius: 4px 4px 2px 2px !important;
+  border-radius: 10px !important;
 }
 
 .el-calendar,
 .el-tabs--border-card,
 .el-card {
-  --el-box-shadow-light: 1px 1px 2px rgba(0, 0, 0, 0.1) !important;
+  --el-box-shadow-light: 0 2px 10px rgba(47, 79, 176, 0.07) !important;
   --el-card-bg-color: rgba(255, 255, 255, 1) !important;
-  border-radius: 5px 5px 2px 2px !important;
+  border-radius: 12px !important;
+  border: 1px solid #e5e9f0;
   position: relative;
   /* overflow: hidden; */
 }
@@ -333,6 +375,6 @@ a {
 }
 
 .el-card {
-  border-radius: 10px !important;
-  box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 10px rgba(47, 79, 176, 0.07) !important;
 }

@@ -37,14 +37,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/Log.vue"), // 懒加载
   },
   {
-    path: "/setting",
-    name: "Setting",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import("../views/Setting.vue"), // 懒加载
-  },
-  {
     path: "/ghPush",
     name: "GhPush",
     component: () => import("../views/GhPush.vue"), // 懒加载
@@ -72,7 +64,7 @@ const router = createRouter({
 });
 
 // 定义不需要登录即可访问的白名单
-const whiteList = ["/login", "/setting", "/about"];
+const whiteList = ["/login", "/about"];
 
 // 全局前置守卫
 router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {

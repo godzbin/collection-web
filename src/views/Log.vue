@@ -1,7 +1,7 @@
 <template>
   <div class="log-view">
-    <div class="view-header">
-      <h2>系统日志</h2>
+    <div class="page-header">
+      <h2 class="page-title">系统日志</h2>
       <div class="header-actions">
         <span class="log-count">共 {{ logs.length }} 条日志</span>
         <el-button @click="loadMoreLogs" :disabled="!hasMore || loading" v-if="hasMore">
@@ -151,19 +151,18 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.view-header {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
 }
 
-.view-header h2 {
-  color: #1e293b;
+.page-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
 }
 
 .header-actions {
@@ -175,5 +174,28 @@ onMounted(() => {
 .log-count {
   color: #64748b;
   font-size: 0.9rem;
+}
+
+/* ========== H5 适配 ========== */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 18px;
+  }
+
+  /* 头部筛选换行排列 */
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header-actions :deep(.el-date-editor) {
+    width: 100% !important;
+  }
 }
 </style>

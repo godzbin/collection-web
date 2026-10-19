@@ -29,8 +29,29 @@
       </div>
     </div>
 
-    <!-- 日志内容区域 - 虚拟滚动 -->
-    <div ref="logContainer" class="log-container" @scroll="handleScroll">
+    <!-- 日志内容区域 -->
+    <!-- 移动端：直接渲染全部日志，行高自适应换行，跟随页面滚动 -->
+    <div v-if="isMobile" class="mobile-log-scroll">
+      <div v-if="filteredLogs.length === 0" class="no-logs">
+        暂无日志数据
+      </div>
+      <div v-else class="mobile-log-list">
+        <div
+            v-for="(log, index) in filteredLogs"
+            :key="index"
+            :class="['m-log-entry', `log-${log.level.toLowerCase()}`]"
+        >
+          <div class="m-log-meta">
+            <span class="m-log-time">{{ formatTime(log.timestamp) }}</span>
+            <span class="m-log-level">{{ log.level.toUpperCase() }}</span>
+          </div>
+          <div class="m-log-content" v-html="formatMessage(log.message)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 桌面端：虚拟滚动 -->
+    <div v-else ref="logContainer" class="log-container" @scroll="handleScroll">
       <div
           v-if="filteredLogs.length === 0"
           class="no-logs"
@@ -65,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 
 // 定义日志类型
 interface LogEntry {
@@ -73,6 +94,15 @@ interface LogEntry {
   level: string | 'info' | 'warn' | 'error' | 'debug';
   message: string;
 }
+
+// 移动端检测（<=768px 时不使用虚拟滚动，直接渲染全部日志）
+const isMobile = ref(false)
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+checkMobile()
+window.addEventListener('resize', checkMobile)
+onBeforeUnmount(() => window.removeEventListener('resize', checkMobile))
 
 // Props
 interface Props {
@@ -229,6 +259,13 @@ const exportLogs = () => {
 const emit = defineEmits<{
   clear: []
 }>()
+
+// 初始化容器高度
+onMounted(() => {
+  if (logContainer.value) {
+    containerHeight.value = logContainer.value.clientHeight
+  }
+})
 </script>
 
 <style scoped>
@@ -378,5 +415,114 @@ const emit = defineEmits<{
   padding: 0 2px;
   border-radius: 2px;
   font-weight: 500;
+}
+
+/* ========== 移动端：固定高度 + 内部滚动 ========== */
+.mobile-log-scroll {
+  background-color: #f9fafb;
+  height: calc(100vh - 230px);
+  min-height: 300px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-log-list {
+  padding: 6px 10px 10px;
+}
+
+.m-log-entry {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.m-log-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.m-log-time {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.m-log-level {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+}
+
+.log-info .m-log-level {
+  color: #10b981;
+}
+
+.log-warn .m-log-level {
+  color: #f59e0b;
+}
+
+.log-error .m-log-level {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.log-debug .m-log-level {
+  color: #3b82f6;
+}
+
+.m-log-content {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #1e293b;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+/* ========== H5 适配 ========== */
+@media (max-width: 768px) {
+  .log-display {
+    height: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-log-scroll {
+    flex: 1;
+  }
+
+  .log-toolbar {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .toolbar-left {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .search-input {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .toolbar-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .filter-select,
+  .search-input {
+    font-size: 13px;
+    padding: 7px 8px;
+  }
 }
 </style>

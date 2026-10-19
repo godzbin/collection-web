@@ -1,7 +1,11 @@
 <template>
-  <div class="setting-page">
-    <h2>系统设置</h2>
-
+  <el-dialog
+      v-model="visible"
+      title="系统设置"
+      width="700px"
+      :close-on-click-modal="false"
+      top="6vh"
+  >
     <div class="setting-steps">
       <!-- 第一步：服务地址配置 -->
       <div class="step">
@@ -42,7 +46,6 @@
                 placeholder="例如: http://192.168.1.1000:38080/xxl-job-admin"
                 class="setting-input"
             />
-
           </div>
           <div class="setting-item" style="margin-top: 12px;">
             <label>XXL-Job 用户名：</label>
@@ -70,62 +73,32 @@
           </div>
         </div>
       </div>
+    </div>
 
-<!--      &lt;!&ndash; 第三步：Log 文件地址配置 &ndash;&gt;-->
-<!--      <div class="step">-->
-<!--        <div class="step-header">-->
-<!--          <div class="step-number">3</div>-->
-<!--          <div class="step-title">Log 文件地址配置</div>-->
-<!--        </div>-->
-<!--        <div class="step-content">-->
-<!--          <div class="setting-item">-->
-<!--            <label>Log 文件存储路径：</label>-->
-<!--            <div class="file-selector">-->
-<!--              <input-->
-<!--                  v-model="config.logFilePath"-->
-<!--                  type="text"-->
-<!--                  placeholder="请选择日志文件"-->
-<!--                  class="setting-input file-input"-->
-<!--                  readonly-->
-<!--              />-->
-<!--              <button @click="handleSelectFile" class="select-file-btn" :disabled="loading">-->
-<!--                选择文件-->
-<!--              </button>-->
-<!--            </div>-->
-<!--            <div class="setting-hint">-->
-<!--              <p><strong>说明：</strong></p>-->
-<!--              <p>点击"选择文件"按钮选择要监听的日志文件。</p>-->
-<!--              <p>当前配置：<strong>{{ config.logFilePath || '未设置' }}</strong></p>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-
-      <!-- 保存按钮 -->
-      <div class="save-section">
-        <button @click="handleSave" class="save-btn" :disabled="loading">
-          {{ loading ? '保存中...' : '保存设置' }}
-        </button>
+    <template #footer>
+      <div class="dialog-footer">
         <button @click="handleReset" class="reset-btn" :disabled="loading">
           重置为默认
         </button>
+        <button @click="handleSave" class="save-btn" :disabled="loading">
+          {{ loading ? '保存中...' : '保存设置' }}
+        </button>
       </div>
-    </div>
-  </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getConfig, saveConfig, resetConfig, isTauri } from '../api/tauri'
-
+import { getConfig, saveConfig, resetConfig, isTauri } from '../../api/tauri'
 
 interface ConfigType {
   serviceUrl: string
   xxlJobUrl: string
   logFilePath: string
-  xxlUsername: string // 新增
-  xxlPassword: string // 新增
+  xxlUsername: string
+  xxlPassword: string
 }
 
 // 配置默认值（来自 env，VITE_* 变量）
@@ -137,17 +110,32 @@ const defaultConfig: ConfigType = {
   xxlPassword: import.meta.env.VITE_XXL_PASSWORD || ''
 }
 
+const visible = ref(false)
+const loading = ref(false)
+
 // 配置数据
 const config = ref<ConfigType>({
   serviceUrl: '',
   xxlJobUrl: '',
   logFilePath: '',
-  xxlUsername: 'admin', // 默认值
-  xxlPassword: ''       // 默认值，建议留空或从安全存储读取
+  xxlUsername: 'admin',
+  xxlPassword: ''
 })
 
-const loading = ref(false)
+// 打开弹窗时加载配置
+watch(visible, (val) => {
+  if (val) {
+    loadConfig()
+  }
+})
 
+const show = () => {
+  visible.value = true
+}
+
+defineExpose({
+  show
+})
 
 // 加载配置
 const loadConfig = async () => {
@@ -180,36 +168,6 @@ const loadConfig = async () => {
     ElMessage.error('加载配置失败')
   }
 }
-
-// // 选择文件
-// const handleSelectFile = async () => {
-//   try {
-//     if (!window.electronAPI) {
-//       ElMessage.warning('非 Electron 环境，不支持文件选择')
-//       return
-//     }
-//
-//     const result = await window.electronAPI.selectFile({
-//       title: '选择日志文件',
-//       filters: [
-//         { name: '日志文件', extensions: ['log', 'txt'] },
-//         { name: '所有文件', extensions: ['*'] }
-//       ]
-//     })
-//
-//     if (result.success && result.filePath) {
-//       config.value.logFilePath = result.filePath
-//       ElMessage.success(`已选择: ${result.fileName}`)
-//     } else if (result.canceled) {
-//       console.log('用户取消了文件选择')
-//     } else {
-//       ElMessage.error(result.error || '选择文件失败')
-//     }
-//   } catch (error) {
-//     console.error('选择文件时出错:', error)
-//     ElMessage.error('选择文件失败')
-//   }
-// }
 
 // 保存配置
 const handleSave = async () => {
@@ -268,7 +226,6 @@ const handleSave = async () => {
   }
 }
 
-
 // 重置配置
 const handleReset = async () => {
   try {
@@ -293,27 +250,9 @@ const handleReset = async () => {
     ElMessage.error('重置配置失败')
   }
 }
-
-
-// 组件挂载时加载配置
-onMounted(() => {
-  loadConfig()
-})
 </script>
 
 <style scoped>
-.setting-page {
-  min-height: 100vh;
-  overflow: auto;
-}
-
-.setting-page h2 {
-  margin-bottom: 24px;
-  color: #1e293b;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 .setting-steps {
   max-width: 800px;
   margin: 0 auto;
@@ -330,7 +269,7 @@ onMounted(() => {
 .step-header {
   display: flex;
   align-items: center;
-  padding: 16px 20px;
+  padding: 12px 20px;
   background-color: #f1f5f9;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -355,7 +294,7 @@ onMounted(() => {
 }
 
 .step-content {
-  padding: 20px;
+  padding: 16px 20px;
 }
 
 .setting-item {
@@ -369,12 +308,6 @@ onMounted(() => {
   color: #1e293b;
 }
 
-.file-selector {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
 .setting-input {
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
@@ -384,35 +317,10 @@ onMounted(() => {
   flex: 1;
 }
 
-.file-input {
-  cursor: pointer;
-}
-
 .setting-input:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-}
-
-.select-file-btn {
-  padding: 10px 16px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.select-file-btn:hover:not(:disabled) {
-  background-color: #2563eb;
-}
-
-.select-file-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .setting-hint {
@@ -432,10 +340,9 @@ onMounted(() => {
   color: #1e293b;
 }
 
-.save-section {
+.dialog-footer {
   display: flex;
   gap: 12px;
-  margin-top: 20px;
   justify-content: center;
 }
 
@@ -481,24 +388,8 @@ onMounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .setting-page {
-    padding: 12px;
-  }
-
   .step-content {
-    padding: 16px;
-  }
-
-  .file-selector {
-    flex-direction: column;
-  }
-
-  .select-file-btn {
-    width: 100%;
-  }
-
-  .save-section {
-    flex-direction: column;
+    padding: 12px 16px;
   }
 }
 </style>

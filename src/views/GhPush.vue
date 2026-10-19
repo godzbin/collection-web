@@ -1,7 +1,7 @@
 <template>
   <div class="gh-push-page">
     <div class="page-header">
-      <h2 class="page-title">港华推送记录</h2>
+      <h2 class="page-title">推送记录</h2>
     </div>
 
     <el-alert
@@ -80,6 +80,7 @@
       </template>
 
       <el-table
+          v-if="!isMobile"
           :data="pagedRows"
           :loading="loading"
           border
@@ -124,6 +125,33 @@
         </el-table-column>
       </el-table>
 
+      <!-- 移动端卡片列表 -->
+      <div v-else class="card-list" v-loading="loading">
+        <div v-if="pagedRows.length === 0 && !loading" class="card-empty">暂无数据</div>
+        <div v-for="row in pagedRows" :key="row.rowKey" class="data-card">
+          <div class="card-head">
+            <span class="card-title">{{ row.modelName }}</span>
+            <el-tag v-if="row.pushed === true" type="success">已推送</el-tag>
+            <el-tag v-else-if="row.pushed === false" type="danger">未推送</el-tag>
+            <el-tag v-else type="info">未知</el-tag>
+          </div>
+          <div class="card-row"><span class="card-label">业务日期</span><span>{{ row.day }}</span></div>
+          <div class="card-row"><span class="card-label">推送时间</span><span>{{ formatTime(row.createTime) }}</span></div>
+          <div v-if="row.errorMsg" class="card-row"><span class="card-label">失败原因</span><span>{{ row.errorMsg }}</span></div>
+          <div class="card-actions">
+            <el-button
+                type="warning"
+                size="small"
+                :disabled="!row.clearable"
+                :loading="clearLoading && clearingRowKey === row.rowKey"
+                @click="handleClear(row)"
+            >
+              清理缓存
+            </el-button>
+          </div>
+        </div>
+      </div>
+
       <div class="pagination-container">
         <el-pagination
             v-model:current-page="pagination.page"
@@ -140,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, reactive, ref, watch} from 'vue'
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import dayjs from 'dayjs'
 import {
@@ -172,6 +200,17 @@ const loading = ref(false)
 const clearLoading = ref(false)
 const clearingRowKey = ref('')
 const loadError = ref('')
+
+// 移动端检测（<=768px 时使用卡片列表）
+const isMobile = ref(false)
+const checkIsMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+checkIsMobile()
+window.addEventListener('resize', checkIsMobile)
+onUnmounted(() => {
+  window.removeEventListener('resize', checkIsMobile)
+})
 
 const metaList = ref<GhPushMeta[]>([])
 const metaEnumList = ref<GhPushMetaEnum[]>([])
@@ -379,7 +418,7 @@ const doClear = async (rows: PushRow[]) => {
 const handleClear = async (row: PushRow) => {
   try {
     await ElMessageBox.confirm(
-        `确定清理「${row.modelName}」${row.day} 的港华重复推送缓存吗？`,
+        `确定清理「${row.modelName}」${row.day} 的重复推送缓存吗？`,
         '清理缓存',
         {confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'}
     )
@@ -396,7 +435,7 @@ const handleBatchClear = async () => {
   )
   try {
     await ElMessageBox.confirm(
-        `确定清理选中的 ${days.length} 个业务日期的港华重复推送缓存吗？`,
+        `确定清理选中的 ${days.length} 个业务日期的重复推送缓存吗？`,
         '批量清理缓存',
         {confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'}
     )
@@ -484,6 +523,64 @@ onMounted(async () => {
   font-weight: 600;
 }
 
+/* ========== 移动端卡片列表 ========== */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-empty {
+  text-align: center;
+  color: #909399;
+  padding: 24px 0;
+  font-size: 13px;
+}
+
+.data-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.card-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  padding: 3px 0;
+  word-break: break-all;
+}
+
+.card-label {
+  flex: none;
+  color: #94a3b8;
+  min-width: 56px;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 /* ========== H5 适配 ========== */
 @media (max-width: 768px) {
   .gh-push-page {
@@ -505,9 +602,9 @@ onMounted(async () => {
     width: 100% !important;
   }
 
+  /* 隐藏桌面表格（由 v-if 控制，此处兜底） */
   .table-card :deep(.el-table) {
-    width: max-content;
-    min-width: 100%;
+    display: none;
   }
 
   .pagination-container {

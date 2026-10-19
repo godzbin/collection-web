@@ -21,6 +21,17 @@ const list = ref<TaskInfoRes[]>([])
 const total = ref(0)
 const xxlLoggedIn = ref(false)
 
+// 移动端检测（<=768px 时使用卡片列表）
+const isMobile = ref(false)
+const checkIsMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+checkIsMobile()
+window.addEventListener('resize', checkIsMobile)
+onUnmounted(() => {
+  window.removeEventListener('resize', checkIsMobile)
+})
+
 let isUnmounted = false
 
 const queryForm = reactive<TaskInfoParams>({
@@ -390,15 +401,36 @@ const handleToggleJob = async (row: TaskInfoRes) => {
 const showBatchTriggerDialog = ref(false)
 const batchTriggerTask = ref<TaskInfoRes | null>(null)
 const dateRange = ref<[string, string] | null>(null)
+// 移动端起止日期（两个单日期选择器，避免 daterange 双日历面板挤压变形）
+const mobileStartDate = ref<string>('')
+const mobileEndDate = ref<string>('')
 const batchTriggerLoading = ref(false)
 const triggerPreviewList = ref<Array<{date: string, param: string, isRun: boolean}>>([])
 
 const handleTrigger = async (row: TaskInfoRes) => {
   batchTriggerTask.value = row
   dateRange.value = null
+  mobileStartDate.value = ''
+  mobileEndDate.value = ''
   triggerPreviewList.value = []
   showBatchTriggerDialog.value = true
 }
+
+// 移动端起止日期变化时同步到 dateRange，复用预览计算逻辑
+watch([mobileStartDate, mobileEndDate], ([start, end]) => {
+  if (start && end) {
+    // 保证开始不晚于结束
+    if (dayjs(start).isAfter(dayjs(end))) {
+      const tmp = start
+      mobileStartDate.value = end
+      mobileEndDate.value = tmp
+      return
+    }
+    dateRange.value = [start, end]
+  } else {
+    dateRange.value = null
+  }
+})
 
 const calculateTriggerPreview = () => {
 
@@ -667,6 +699,7 @@ onUnmounted(() => {
       </template>
 
       <el-table
+          v-if="!isMobile"
           :data="list"
           :loading="loading"
           border
@@ -720,6 +753,33 @@ onUnmounted(() => {
         </el-table-column>
       </el-table>
 
+      <!-- 移动端卡片列表 -->
+      <div v-else class="card-list" v-loading="loading">
+        <div v-if="list.length === 0 && !loading" class="card-empty">暂无数据</div>
+        <div v-for="row in list" :key="row.id" class="data-card">
+          <div class="card-head">
+            <span class="card-title">{{ row.jobDesc }}</span>
+            <el-tag :type="row.triggerStatus === 1 ? 'success' : 'danger'">
+              {{ row.triggerStatus === 1 ? '运行中' : '停止' }}
+            </el-tag>
+          </div>
+          <div class="card-row"><span class="card-label">ID</span><span>{{ row.id }}</span></div>
+          <div class="card-row"><span class="card-label">调度类型</span><span>{{ getScheduleDescription(row) }}</span></div>
+          <div class="card-row"><span class="card-label">运行模式</span><span>{{ getRunModeDescription(row) }}</span></div>
+          <div class="card-actions">
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button
+                :type="row.triggerStatus === 1 ? 'danger' : 'success'"
+                size="small"
+                @click="handleToggleJob(row)"
+            >
+              {{ row.triggerStatus === 1 ? '停止' : '启动' }}
+            </el-button>
+            <el-button type="warning" size="small" @click="handleTrigger(row)">执行多次</el-button>
+          </div>
+        </div>
+      </div>
+
       <div class="pagination-container">
         <el-pagination
             v-model:current-page="currentPage"
@@ -742,35 +802,56 @@ onUnmounted(() => {
     <el-dialog
         v-model="showBatchTriggerDialog"
         title="批量触发任务"
-        width="700px"
+        :width="isMobile ? '94%' : '700px'"
         :close-on-click-modal="false"
+        class="batch-trigger-dialog"
     >
-      <div v-if="batchTriggerTask" style="padding: 20px 0">
-        <el-form label-width="100px">
+      <div v-if="batchTriggerTask" :class="isMobile ? 'batch-body-mobile' : 'batch-body'">
+        <el-form :label-width="isMobile ? '70px' : '100px'">
           <el-form-item label="任务描述">
             <span>{{ batchTriggerTask.jobDesc }}</span>
           </el-form-item>
           <el-form-item label="日期范围">
-            <el-date-picker
-                v-model="dateRange"
-                type="daterange"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-            />
+            <template v-if="!isMobile">
+              <el-date-picker
+                  v-model="dateRange"
+                  type="daterange"
+                  range-separator="至"
+                  start-placeholder="开始日期"
+                  end-placeholder="结束日期"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+              />
+            </template>
+            <div v-else class="mobile-range">
+              <el-date-picker
+                  v-model="mobileStartDate"
+                  type="date"
+                  placeholder="开始日期"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+              />
+              <span class="mobile-range-sep">至</span>
+              <el-date-picker
+                  v-model="mobileEndDate"
+                  type="date"
+                  placeholder="结束日期"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+              />
+            </div>
           </el-form-item>
         </el-form>
 
-        <div v-if="triggerPreviewList.length > 0" style="margin-top: 20px">
-          <div style="margin-bottom: 10px; font-weight: bold; color: #606266;">
+        <div v-if="triggerPreviewList.length > 0" class="preview-section">
+          <div class="preview-title">
             触发预览 (共 {{ triggerPreviewList.length }} 次)：
           </div>
           <el-table
+              v-if="!isMobile"
               :data="triggerPreviewList"
               border
-              max-height="400"
+              max-height="55vh"
               style="width: 100%"
           >
             <el-table-column prop="date" label="日期" width="150" align="center" />
@@ -788,6 +869,21 @@ onUnmounted(() => {
               </template>
             </el-table-column>
           </el-table>
+
+          <!-- 移动端预览卡片列表 -->
+          <div v-else class="card-list">
+            <div v-for="row in triggerPreviewList" :key="row.date" class="data-card">
+              <div class="card-head">
+                <span class="card-title">{{ row.date }}</span>
+                <el-tag v-if="row.isRun" type="success">已执行</el-tag>
+                <el-tag v-else type="danger">未执行</el-tag>
+              </div>
+              <div class="card-row">
+                <span class="card-label">执行参数</span>
+                <span class="param-text">{{ row.param }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <template #footer>
@@ -862,6 +958,71 @@ onUnmounted(() => {
   padding: 5px 10px;
 }
 
+/* ========== 移动端卡片列表 ========== */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-empty {
+  text-align: center;
+  color: #909399;
+  padding: 24px 0;
+  font-size: 13px;
+}
+
+.data-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.card-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  padding: 3px 0;
+  word-break: break-all;
+}
+
+.card-label {
+  flex: none;
+  color: #94a3b8;
+  min-width: 56px;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* 卡片列表仅在移动端渲染，桌面表格由 v-if 控制 */
+@media (max-width: 768px) {
+  .table-card :deep(.el-table) {
+    display: none;
+  }
+}
+
 /* ========== H5 适配 ========== */
 @media (max-width: 768px) {
   .task-page {
@@ -883,12 +1044,6 @@ onUnmounted(() => {
     width: 100% !important;
   }
 
-  /* 表格横向滚动 */
-  .table-card :deep(.el-table) {
-    width: max-content;
-    min-width: 100%;
-  }
-
   .pagination-container {
     justify-content: center;
   }
@@ -897,6 +1052,75 @@ onUnmounted(() => {
     flex-wrap: wrap;
     justify-content: center;
     row-gap: 8px;
+  }
+
+  /* 弹窗在移动端全宽 */
+  :deep(.el-dialog) {
+    width: 94% !important;
+  }
+}
+
+/* ========== 批量触发弹窗 ========== */
+.batch-body {
+  padding: 20px 0;
+}
+
+.batch-body-mobile {
+  padding: 8px 0 0;
+}
+
+.preview-section {
+  margin-top: 20px;
+}
+
+.preview-title {
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #606266;
+}
+
+/* 预览卡片内参数文字 */
+.param-text {
+  word-break: break-all;
+  font-size: 12px;
+  font-family: Menlo, Consolas, monospace;
+}
+
+/* 移动端：起止日期两个选择器并排 */
+.mobile-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.mobile-range-sep {
+  flex: none;
+  color: #909399;
+  font-size: 13px;
+}
+
+/* 移动端：预览列表固定高度滚动 */
+@media (max-width: 768px) {
+  .batch-trigger-dialog .preview-section .card-list {
+    max-height: 46vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* 移动端：全屏弹窗头部/底部按钮适配 */
+@media (max-width: 768px) {
+  .batch-trigger-dialog :deep(.el-dialog__header) {
+    padding: 12px 16px;
+  }
+
+  .batch-trigger-dialog :deep(.el-dialog__body) {
+    padding: 8px 16px 16px;
+  }
+
+  .batch-trigger-dialog :deep(.el-dialog__footer) {
+    padding: 10px 16px 16px;
   }
 }
 </style>

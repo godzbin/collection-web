@@ -17,7 +17,7 @@
           我们致力于为用户提供可靠的数据采集解决方案，帮助用户轻松获取所需数据。
         </p>
       </div>
-      
+
       <div class="features-section">
         <h3>核心功能</h3>
         <ul>
@@ -28,30 +28,34 @@
           <li>可靠的错误处理机制</li>
         </ul>
       </div>
-      
-      <!-- <div class="tech-section">
-        <h3>技术栈</h3>
-        <div class="tech-stack">
-          <span class="tech-tag">Vue 3</span>
-          <span class="tech-tag">Electron</span>
-          <span class="tech-tag">TypeScript</span>
-          <span class="tech-tag">ECharts</span>
-          <span class="tech-tag">Node.js</span>
-        </div>
-      </div> -->
-      
+
+      <!-- 系统设置入口 -->
+      <div class="setting-section">
+        <h3>系统设置</h3>
+        <p>配置后端服务地址、XXL-Job 调度中心等连接信息。</p>
+        <el-button type="primary" @click="showSettingDialog">打开系统设置</el-button>
+      </div>
+
     </div>
-    
+
     <div class="footer">
       <p>&copy; 2023-{{ currentYear }} 0xa Collection System. 保留所有权利。</p>
     </div>
+
+    <SettingDialog ref="settingDialogRef" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import SettingDialog from './components/SettingDialog.vue'
 
 const currentYear = ref(new Date().getFullYear())
+const settingDialogRef = ref<InstanceType<typeof SettingDialog> | null>(null)
+
+const showSettingDialog = () => {
+  settingDialogRef.value?.show()
+}
 
 onMounted(() => {
   // 可以在这里添加一些初始化逻辑
@@ -111,7 +115,7 @@ onMounted(() => {
   width: 100%;
 }
 
-.intro-section, .features-section, .tech-section, .contact-section {
+.intro-section, .features-section, .tech-section, .contact-section, .setting-section {
   margin-bottom: 30px;
   padding: 20px;
   border-radius: 12px;
@@ -212,7 +216,7 @@ onMounted(() => {
     padding: 20px 15px;
   }
   
-  .intro-section, .features-section, .tech-section, .contact-section {
+  .intro-section, .features-section, .tech-section, .contact-section, .setting-section {
     padding: 15px;
   }
 }
