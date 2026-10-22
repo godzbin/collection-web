@@ -83,6 +83,7 @@ const getData = async () => {
 
   try {
     loading.value = true
+    console.log(queryForm.triggerStatus)
     const res: TaskPageRes = await getTaskInfoList({
       start: pagination.start,
       length: pagination.length,
@@ -90,7 +91,7 @@ const getData = async () => {
       jobDesc: queryForm.jobDesc,
       executorHandler: queryForm.executorHandler,
       author: queryForm.author,
-      triggerStatus: queryForm.triggerStatus || -1,
+      triggerStatus: queryForm.triggerStatus === '' ? -1 : queryForm.triggerStatus ?? -1,
     })
     await nextTick()
     if (!isUnmounted) {

@@ -557,10 +557,10 @@ onMounted(() => {
   padding: 0 12px;
 }
 .mono-input :deep(.el-input-group__append .el-button) {
-  color: #fff;
+  color: var(--el-color-primary);
 }
 .mono-input :deep(.el-input-group__append .el-button:hover) {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--el-color-primary-dark-2);
 }
 
 .param-item {

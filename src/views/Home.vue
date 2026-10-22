@@ -42,7 +42,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="size" label="数据数量"></el-table-column>
-        <el-table-column prop="status" label="数据状态">
+        <el-table-column prop="" label="数据状态">
           <template #default="scope">
             <el-tag v-if="scope.row.importUri && scope.row.pid" :size="'small'" :type="scope.row.size ? 'success' : 'warning'">{{
                 scope.row.importUri ? (scope.row.size ? '已入库' : '未入库') : ''
